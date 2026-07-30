@@ -68,7 +68,7 @@ function resolveEndpoint(entry, pos, preferRight) {
 
   const before = pos < view.viewport.from || (coords && coords.top < rect.top);
   return {
-    x: (rect.left + rect.right) / 2,
+    x: (coords.right + coords.left)/2,
     y: before ? rect.top + 6 : rect.bottom - 6,
     snapped: true,
   };
