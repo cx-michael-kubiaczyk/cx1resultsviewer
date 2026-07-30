@@ -11,10 +11,25 @@ function computeRange(doc, line, column, length) {
   return { from, to };
 }
 
+function applyDefaultLayout(view, doc, minLine, maxLine) {
+  const lineHeight = view.defaultLineHeight;
+  const displayLines = Math.min(Math.max(Number(maxLine) - Number(minLine) + 1, 1), 20);
+  const height = Math.ceil(lineHeight * displayLines);
+  view.dom.style.height = height + "px";
+  view.requestMeasure();
+
+  const midLine = Math.round((Number(minLine) + Number(maxLine)) / 2);
+  const clampedMidLine = Math.min(Math.max(midLine, 1), doc.lines);
+  const midPos = doc.line(clampedMidLine).from;
+  view.dispatch({ effects: EditorView.scrollIntoView(midPos, { y: "center" }) });
+}
+
 function mountBox(container) {
   const payloadEl = container.querySelector(".codebox-payload");
   const data = JSON.parse(payloadEl.textContent);
   const mountEl = container.querySelector(".codebox-editor");
+  const headerEl = container.querySelector(".codebox-header");
+  const stepsEl = container.querySelector(".codebox-steps");
 
   const doc = Text.of(data.source.split("\n"));
 
@@ -66,30 +81,75 @@ function mountBox(container) {
     parent: mountEl,
   });
 
-  const displayLines = Math.min(
-    Math.max(Number(data.maxLine) - Number(data.minLine) + 1, 1),
-    20
-  );
-
   requestAnimationFrame(() => {
-    const lineHeight = view.defaultLineHeight;
-    view.dom.style.height = Math.ceil(lineHeight * displayLines) + "px";
-    view.requestMeasure();
-
-    const midLine = Math.round((Number(data.minLine) + Number(data.maxLine)) / 2);
-    const clampedMidLine = Math.min(Math.max(midLine, 1), doc.lines);
-    const midPos = doc.line(clampedMidLine).from;
-    view.dispatch({ effects: EditorView.scrollIntoView(midPos, { y: "center" }) });
+    applyDefaultLayout(view, doc, data.minLine, data.maxLine);
   });
 
   return {
     boxId: data.boxId,
     resultIndex: data.resultIndex,
     view,
+    doc,
+    minLine: data.minLine,
+    maxLine: data.maxLine,
     containerEl: container,
+    headerEl,
+    stepsEl,
+    editorEl: mountEl,
     highlights: highlightRanges,
   };
 }
 
+function wireButtons(box) {
+  box.containerEl.querySelector('[data-action="maximize"]').addEventListener("click", () => {
+    const top = box.editorEl.getBoundingClientRect().top;
+    box.view.dom.style.height = Math.max(window.innerHeight - top - 16, 40) + "px";
+    box.view.requestMeasure();
+  });
+
+  box.containerEl.querySelector('[data-action="reset"]').addEventListener("click", () => {
+    applyDefaultLayout(box.view, box.doc, box.minLine, box.maxLine);
+  });
+
+  const toggleBtn = box.containerEl.querySelector('[data-action="toggle-list"]');
+  toggleBtn.addEventListener("click", () => {
+    const hidden = box.stepsEl.classList.toggle("is-hidden");
+    toggleBtn.setAttribute("aria-pressed", String(!hidden));
+  });
+}
+
+function wireResizeHandles(box) {
+  const MIN_HEIGHT = Math.max(box.view.defaultLineHeight * 1.5, 24);
+  box.containerEl.querySelectorAll('[data-role="resize-handle"]').forEach((handle) => {
+    const sign = handle.dataset.edge === "bottom" ? 1 : -1;
+
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      handle.setPointerCapture(e.pointerId);
+      handle.classList.add("is-dragging");
+      const startY = e.clientY;
+      const startHeight = box.view.dom.getBoundingClientRect().height;
+      document.body.style.userSelect = "none";
+
+      function onMove(ev) {
+        const delta = (ev.clientY - startY) * sign;
+        box.view.dom.style.height = Math.max(startHeight + delta, MIN_HEIGHT) + "px";
+      }
+      function onUp(ev) {
+        handle.releasePointerCapture(ev.pointerId);
+        handle.classList.remove("is-dragging");
+        document.body.style.userSelect = "";
+        box.view.requestMeasure();
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+      }
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+    });
+  });
+}
+
 const boxes = Array.from(document.querySelectorAll('[data-role="codebox"]')).map(mountBox);
+boxes.forEach(wireButtons);
+boxes.forEach(wireResizeHandles);
 initFlowArrows(boxes);

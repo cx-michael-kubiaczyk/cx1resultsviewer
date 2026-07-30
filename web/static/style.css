@@ -3,8 +3,17 @@ body { font-family: sans-serif; margin: 1.5rem; }
 .error { color: #b00020; }
 .codebox { margin-bottom: 1.5rem; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; }
 .codebox-header { background: #f4f4f4; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.9rem; border-bottom: 1px solid #ccc; position: relative; z-index: 2; }
+.codebox-header-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.codebox-title { overflow-wrap: anywhere; }
+.codebox-buttons { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.codebox-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 1px solid #ccc; border-radius: 3px; background: #fff; color: #555; cursor: pointer; }
+.codebox-btn:hover { background: #eee; color: #222; }
+.codebox-btn[aria-pressed="false"] { color: #aaa; }
 .codebox-steps { margin: 0.3rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
+.codebox-steps.is-hidden { display: none; }
 .codebox-step-loc { color: #777; }
+.codebox-resize-handle { height: 6px; cursor: ns-resize; background: transparent; touch-action: none; }
+.codebox-resize-handle:hover, .codebox-resize-handle.is-dragging { background: #ddd; }
 .cm-node-highlight { background: #ffe08a; outline: 1px solid #d9a441; position: relative; }
 .cm-node-badge::before {
   content: attr(data-node-number);
@@ -27,7 +36,7 @@ body { font-family: sans-serif; margin: 1.5rem; }
 }
 
 .flow-arrows-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
-.flow-arrow { fill: none; stroke-width: 2; opacity: 0.85; }
+.flow-arrow { fill: none; stroke-width: 1.5; opacity: 0.85; }
 .flow-arrow.snapped { stroke-dasharray: 4 3; }
 
 .flow-color-0 { stroke: #d9534f; fill: #d9534f; }

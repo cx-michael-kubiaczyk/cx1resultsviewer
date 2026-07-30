@@ -96,8 +96,9 @@ export function initFlowArrows(boxes) {
     marker.setAttribute("viewBox", "0 0 10 10");
     marker.setAttribute("refX", "8");
     marker.setAttribute("refY", "5");
-    marker.setAttribute("markerWidth", "8");
-    marker.setAttribute("markerHeight", "8");
+    marker.setAttribute("markerUnits", "userSpaceOnUse");
+    marker.setAttribute("markerWidth", "16");
+    marker.setAttribute("markerHeight", "16");
     marker.setAttribute("orient", "auto-start-reverse");
     const arrowPath = document.createElementNS(SVG_NS, "path");
     arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
@@ -110,6 +111,10 @@ export function initFlowArrows(boxes) {
   for (const edge of edges) {
     const path = document.createElementNS(SVG_NS, "path");
     path.setAttribute("class", `flow-arrow ${edge.colorClass}`);
+    // Inline style beats the .flow-color-N stylesheet rule (same specificity as
+    // .flow-arrow, but declared later) which would otherwise fill this open
+    // bezier path solid, closing it with an implicit line back to its start.
+    path.style.fill = "none";
     path.setAttribute(
       "marker-end",
       `url(#flow-arrowhead-${edge.from.resultIndex % PALETTE_SIZE})`
@@ -146,6 +151,9 @@ export function initFlowArrows(boxes) {
   for (const box of boxes) {
     box.view.scrollDOM.addEventListener("scroll", scheduleRedraw, { passive: true });
   }
+
+  const ro = new ResizeObserver(scheduleRedraw);
+  for (const box of boxes) ro.observe(box.containerEl);
 
   redrawAll();
 }

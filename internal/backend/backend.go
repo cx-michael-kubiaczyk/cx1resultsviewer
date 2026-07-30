@@ -28,7 +28,7 @@ func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServe
 		Cx1Client:   cx1client,
 		logger:      logger,
 		ScanSources: NewCodeSet(),
-		Addr:        ":8080",
+		Addr:        "127.0.0.1:8080",
 		WebDir:      "web",
 	}
 }

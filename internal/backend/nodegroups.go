@@ -5,7 +5,7 @@ import "github.com/cxpsemea/Cx1ClientGo"
 // mergeLineGap is the max line-number gap between a node and a group's
 // current [MinLine, MaxLine] window for that node to be merged into the
 // same box instead of starting a new one.
-const mergeLineGap = 5
+const mergeLineGap = 10
 
 // contextPaddingLines is the extra context shown above/below a group's
 // highlighted range.
