@@ -39,12 +39,15 @@ func (m *WebServer) Shutdown() {
 }
 
 func (m *WebServer) Run() error {
+	return m.test()
+}
+
+func (m *WebServer) test() error {
 	err := m.LoadResult(`https://deu.ast.checkmarx.net/sast-results/e25a6a86-2d86-4b1b-8d50-6c6f706decdd/0f562295-d7a8-49d6-bd37-82177647633b?resultId=wta7MY4iw%2BJ3rxS9fiHBXIHukys%3D&pagination=pageSize%3D10%3BcurrentPage%3D1&grouping=groups%255B0%255D%3Dlanguage%3Bgroups%255B1%255D%3Dseverity%3Bgroups%255B2%255D%3DqueryName`)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(m.ScanSources.GetSources())
-
 	return nil
 }

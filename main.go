@@ -22,7 +22,7 @@ func main() {
 	myformatter.LogFormat = "[%lvl%][%time%] %msg%\n"
 	logger.SetFormatter(myformatter)
 	// Use stderr so logs don't corrupt the MCP stdio transport on stdout.
-	logger.SetOutput(os.Stderr)
+	logger.SetOutput(os.Stdout)
 
 	logger.Info("Starting")
 	LogLevel := flag.String("log", "INFO", "Log level: TRACE, DEBUG, INFO, WARNING, ERROR, FATAL")
