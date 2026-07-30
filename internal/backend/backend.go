@@ -11,6 +11,7 @@ type WebServer struct {
 	Cx1Client   *Cx1ClientGo.Cx1Client
 	logger      *logrus.Logger
 	ScanSources CodeSet
+	Results     []Cx1ClientGo.ScanSASTResult
 }
 
 func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServer {
@@ -21,13 +22,13 @@ func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServe
 	}
 }
 
-func (m *WebServer) LoadResult(path string) error {
+func (m *WebServer) LoadResults(path string) error {
 	_, sid, rid, err := extractIDFromURL(path)
 	if err != nil {
 		return err
 	}
 
-	err = m.createCodeExtract(sid, rid)
+	m.Results, err = m.createCodeExtract(sid, rid)
 	if err != nil {
 		return fmt.Errorf("failed to create code extract: %v", err)
 	}
@@ -43,11 +44,17 @@ func (m *WebServer) Run() error {
 }
 
 func (m *WebServer) test() error {
-	err := m.LoadResult(`https://deu.ast.checkmarx.net/sast-results/e25a6a86-2d86-4b1b-8d50-6c6f706decdd/0f562295-d7a8-49d6-bd37-82177647633b?resultId=wta7MY4iw%2BJ3rxS9fiHBXIHukys%3D&pagination=pageSize%3D10%3BcurrentPage%3D1&grouping=groups%255B0%255D%3Dlanguage%3Bgroups%255B1%255D%3Dseverity%3Bgroups%255B2%255D%3DqueryName`)
+	err := m.LoadResults(`https://deu.ast.checkmarx.net/sast-results/e25a6a86-2d86-4b1b-8d50-6c6f706decdd/0f562295-d7a8-49d6-bd37-82177647633b?resultId=wta7MY4iw%2BJ3rxS9fiHBXIHukys%3D&pagination=pageSize%3D10%3BcurrentPage%3D1&grouping=groups%255B0%255D%3Dlanguage%3Bgroups%255B1%255D%3Dseverity%3Bgroups%255B2%255D%3DqueryName`)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(m.ScanSources.GetSources())
+	for _, result := range m.Results {
+		fmt.Printf("Result: %s\n", result.ResultID)
+		for i, node := range result.Data.Nodes {
+			fmt.Printf("Node %d: %s line %d col %d length %d - '%s'\n", i+1, node.FileName, node.Line, node.Column, node.Length, node.Name)
+			fmt.Println(m.ScanSources.GetFile(node.FileName))
+		}
+	}
 	return nil
 }

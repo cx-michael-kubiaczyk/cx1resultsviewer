@@ -28,7 +28,7 @@ func extractIDFromURL(path string) (ProjectID, ScanID, ResultID string, err erro
 	return
 }
 
-func (m *WebServer) createCodeExtract(sid, rid string) error {
+func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTResult, error) {
 	filter := Cx1ClientGo.ScanSASTResultsFilter{
 		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 10},
 		ScanID:     sid,
@@ -37,7 +37,7 @@ func (m *WebServer) createCodeExtract(sid, rid string) error {
 
 	_, results, err := m.Cx1Client.GetAllScanSASTResultsFiltered(filter)
 	if err != nil {
-		return fmt.Errorf("failed to get results: %v", err)
+		return nil, fmt.Errorf("failed to get results: %v", err)
 	}
 
 	for _, result := range results {
@@ -47,12 +47,12 @@ func (m *WebServer) createCodeExtract(sid, rid string) error {
 			if !m.ScanSources.HasFile(n.FileName) {
 				fileSource, err := m.Cx1Client.GetScannedFileSourceByID(sid, n.FileName)
 				if err != nil {
-					return fmt.Errorf("failed to get file source: %v", err)
+					return nil, fmt.Errorf("failed to get file source: %v", err)
 				}
 				m.ScanSources.AddFile(n.FileName, fileSource)
 			}
 		}
 	}
-	return nil
+	return results, nil
 
 }

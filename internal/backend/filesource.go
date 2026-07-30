@@ -18,6 +18,13 @@ func (cs *CodeSet) AddFile(path, code string) {
 	cs.Files[path] = code
 }
 
+func (cs *CodeSet) GetFile(path string) string {
+	if src, ok := cs.Files[path]; ok {
+		return src
+	}
+	return ""
+}
+
 func (cs *CodeSet) GetSources() string {
 	var str strings.Builder
 	for _, code := range cs.Files {
