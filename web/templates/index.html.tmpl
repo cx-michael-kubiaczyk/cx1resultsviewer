@@ -31,7 +31,14 @@
     <div class="codeboxes">
       {{range .CodeBoxes}}
         <section class="codebox" data-role="codebox">
-          <div class="codebox-header">{{.FilePath}} : line {{.Line}}, col {{.Column}} ({{.QueryName}} / "{{.Name}}")</div>
+          <div class="codebox-header">
+            {{.FilePath}} : lines {{.MinLine}}-{{.MaxLine}} ({{.QueryName}})
+            <ol class="codebox-steps">
+              {{range .Highlights}}
+                <li>{{.Name}} <span class="codebox-step-loc">(line {{.Line}}, col {{.Column}})</span></li>
+              {{end}}
+            </ol>
+          </div>
           <div class="codebox-editor"></div>
           <script type="application/json" class="codebox-payload">{{.DataJSON}}</script>
         </section>

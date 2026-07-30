@@ -6,13 +6,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 go build ./...
-go run main.go
+go run . -apikey %CX1_DEU_KEY%
 go test ./internal/backend/
 go vet ./...
 go mod tidy
 ```
 
-`main.go` reads Checkmarx One credentials from environment variables via `Cx1ClientGo.NewClient()`. Check the `Cx1ClientGo` library docs for the exact variable names (`CX_BASE_URI`, `CX_TENANT`, `CX_CLIENT_ID`, `CX_CLIENT_SECRET`, etc.).
+The `-apikey` flag provides the Checkmarx One API key. Additional parameters can be provided directly on the command-line, visible by running with the -h parameter:
+
+```
+  -apikey string
+        CheckmarxOne API Key (if not using client id/secret)
+  -client string
+        CheckmarxOne Client ID (if not using API Key)
+  -cx1 string
+        If using client id and secret: CheckmarxOne platform URL
+  -iam string
+        If using client id and secret: CheckmarxOne IAM URL
+  -log string
+        Log level: TRACE, DEBUG, INFO, WARNING, ERROR, FATAL (default "INFO")
+  -secret string
+        CheckmarxOne Client Secret (if not using API Key)
+  -tenant string
+        If using client id and secret: CheckmarxOne tenant
+  -token string
+        Alternative: A valid access_token. If this value is provided, others will be ignored - the client will lose access when the token expires
+  -useragent string
+        Optional: A custom user-agent string for all requests to Cx1 (default "Cx1ClientGo")
+```
 
 ## Architecture
 

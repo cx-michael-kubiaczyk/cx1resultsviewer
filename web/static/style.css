@@ -2,5 +2,37 @@ body { font-family: sans-serif; margin: 1.5rem; }
 .url-form input[type=text] { font-family: monospace; }
 .error { color: #b00020; }
 .codebox { margin-bottom: 1.5rem; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; }
-.codebox-header { background: #f4f4f4; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.9rem; border-bottom: 1px solid #ccc; }
-.cm-node-highlight { background: #ffe08a; outline: 1px solid #d9a441; }
+.codebox-header { background: #f4f4f4; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.9rem; border-bottom: 1px solid #ccc; position: relative; z-index: 2; }
+.codebox-steps { margin: 0.3rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
+.codebox-step-loc { color: #777; }
+.cm-node-highlight { background: #ffe08a; outline: 1px solid #d9a441; position: relative; }
+.cm-node-badge::before {
+  content: attr(data-node-number);
+  position: absolute;
+  top: -0.7em;
+  left: -0.4em;
+  width: 1.3em;
+  height: 1.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6em;
+  font-weight: bold;
+  line-height: 1;
+  color: #333;
+  background: #fff;
+  border: 1px solid #d9a441;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.flow-arrows-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+.flow-arrow { fill: none; stroke-width: 2; opacity: 0.85; }
+.flow-arrow.snapped { stroke-dasharray: 4 3; }
+
+.flow-color-0 { stroke: #d9534f; fill: #d9534f; }
+.flow-color-1 { stroke: #337ab7; fill: #337ab7; }
+.flow-color-2 { stroke: #5cb85c; fill: #5cb85c; }
+.flow-color-3 { stroke: #f0ad4e; fill: #f0ad4e; }
+.flow-color-4 { stroke: #9b59b6; fill: #9b59b6; }
+.flow-color-5 { stroke: #16a085; fill: #16a085; }

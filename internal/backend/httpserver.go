@@ -2,6 +2,7 @@ package backend
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -69,15 +70,22 @@ func (m *WebServer) handleLoad(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+type HighlightViewModel struct {
+	FlowID string
+	Line   uint64
+	Column uint64
+	Length uint64
+	Name   string
+}
+
 type CodeBoxViewModel struct {
+	BoxID       string
 	ResultIndex int
-	NodeIndex   int
 	FilePath    string
-	Line        uint64
-	Column      uint64
-	Length      uint64
-	Name        string
 	QueryName   string
+	MinLine     uint64
+	MaxLine     uint64
+	Highlights  []HighlightViewModel
 	DataJSON    template.JS
 }
 
@@ -89,12 +97,23 @@ type PageViewModel struct {
 	CodeBoxes    []CodeBoxViewModel
 }
 
+type highlightPayload struct {
+	FlowID    string `json:"flowId"`
+	NodeIndex int    `json:"nodeIndex"`
+	Line      uint64 `json:"line"`
+	Column    uint64 `json:"column"`
+	Length    uint64 `json:"length"`
+	Name      string `json:"name"`
+}
+
 type codeBoxPayload struct {
-	FilePath string `json:"filePath"`
-	Source   string `json:"source"`
-	Line     uint64 `json:"line"`
-	Column   uint64 `json:"column"`
-	Length   uint64 `json:"length"`
+	BoxID       string             `json:"boxId"`
+	FilePath    string             `json:"filePath"`
+	Source      string             `json:"source"`
+	ResultIndex int                `json:"resultIndex"`
+	MinLine     uint64             `json:"minLine"`
+	MaxLine     uint64             `json:"maxLine"`
+	Highlights  []highlightPayload `json:"highlights"`
 }
 
 func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSASTResult, sources *CodeSet) (PageViewModel, error) {
@@ -105,27 +124,52 @@ func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSAS
 	}
 
 	for ri, result := range results {
-		for ni, node := range result.Data.Nodes {
+		for gi, group := range groupResultNodes(ri, result) {
+			boxID := fmt.Sprintf("box-%d-%d", ri, gi)
+			minLine, maxLine := group.paddedRange()
+
+			highlights := make([]HighlightViewModel, 0, len(group.Nodes))
+			highlightPayloads := make([]highlightPayload, 0, len(group.Nodes))
+			for _, ref := range group.Nodes {
+				flowID := fmt.Sprintf("f%d-%d", ri, ref.NodeIndex)
+				highlights = append(highlights, HighlightViewModel{
+					FlowID: flowID,
+					Line:   ref.Node.Line,
+					Column: ref.Node.Column,
+					Length: ref.Node.Length,
+					Name:   ref.Node.Name,
+				})
+				highlightPayloads = append(highlightPayloads, highlightPayload{
+					FlowID:    flowID,
+					NodeIndex: ref.NodeIndex,
+					Line:      ref.Node.Line,
+					Column:    ref.Node.Column,
+					Length:    ref.Node.Length,
+					Name:      ref.Node.Name,
+				})
+			}
+
 			payload := codeBoxPayload{
-				FilePath: node.FileName,
-				Source:   sources.GetFile(node.FileName),
-				Line:     node.Line,
-				Column:   node.Column,
-				Length:   node.Length,
+				BoxID:       boxID,
+				FilePath:    group.FilePath,
+				Source:      sources.GetFile(group.FilePath),
+				ResultIndex: ri,
+				MinLine:     minLine,
+				MaxLine:     maxLine,
+				Highlights:  highlightPayloads,
 			}
 			raw, err := json.Marshal(payload)
 			if err != nil {
 				return vm, err
 			}
 			vm.CodeBoxes = append(vm.CodeBoxes, CodeBoxViewModel{
+				BoxID:       boxID,
 				ResultIndex: ri,
-				NodeIndex:   ni,
-				FilePath:    node.FileName,
-				Line:        node.Line,
-				Column:      node.Column,
-				Length:      node.Length,
-				Name:        node.Name,
+				FilePath:    group.FilePath,
 				QueryName:   result.Data.QueryName,
+				MinLine:     minLine,
+				MaxLine:     maxLine,
+				Highlights:  highlights,
 				DataJSON:    template.JS(raw),
 			})
 		}

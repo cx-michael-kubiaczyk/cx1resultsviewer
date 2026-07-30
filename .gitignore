@@ -1,1 +1,4 @@
 *.txt
+/cmd/devtest/
+*.png
+*.html
