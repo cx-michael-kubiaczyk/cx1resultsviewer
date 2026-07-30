@@ -20,28 +20,24 @@ body { font-family: sans-serif; margin: 1.5rem; }
   position: absolute;
   top: -0.7em;
   left: -0.4em;
-  width: 1.3em;
+  min-width: 1.3em;
   height: 1.3em;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 0.15em;
   font-size: 0.6em;
   font-weight: bold;
   line-height: 1;
   color: #333;
   background: #fff;
   border: 1px solid #d9a441;
-  border-radius: 50%;
+  border-radius: 0.65em;
   pointer-events: none;
+  white-space: nowrap;
 }
 
-.flow-arrows-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
-.flow-arrow { fill: none; stroke-width: 1.5; opacity: 0.85; }
+.flow-arrows-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.flow-arrow { fill: none; stroke: #3c9d40; stroke-width: 1.5; opacity: 0.85; }
 .flow-arrow.snapped { stroke-dasharray: 4 3; }
-
-.flow-color-0 { stroke: #d9534f; fill: #d9534f; }
-.flow-color-1 { stroke: #337ab7; fill: #337ab7; }
-.flow-color-2 { stroke: #5cb85c; fill: #5cb85c; }
-.flow-color-3 { stroke: #f0ad4e; fill: #f0ad4e; }
-.flow-color-4 { stroke: #9b59b6; fill: #9b59b6; }
-.flow-color-5 { stroke: #16a085; fill: #16a085; }
+.flow-arrowhead-fill { fill: #3c9d40; stroke: #3c9d40; }

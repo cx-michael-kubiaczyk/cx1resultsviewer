@@ -1,4 +1,3 @@
-const PALETTE_SIZE = 6;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export const MAX_CLOSE_LINE_GAP = 1;
@@ -26,7 +25,6 @@ function buildEdges(boxes) {
         to: h.to,
         view: box.view,
         boxEl: box.containerEl,
-        resultIndex: box.resultIndex,
       };
       if (!byResult.has(box.resultIndex)) byResult.set(box.resultIndex, []);
       byResult.get(box.resultIndex).push(entry);
@@ -40,7 +38,6 @@ function buildEdges(boxes) {
       if (areClose(entries[i], entries[i + 1])) continue;
       edges.push({
         id: `edge-${resultIndex}-${entries[i].nodeIndex}-${entries[i + 1].nodeIndex}`,
-        colorClass: `flow-color-${resultIndex % PALETTE_SIZE}`,
         from: entries[i],
         to: entries[i + 1],
       });
@@ -90,35 +87,26 @@ export function initFlowArrows(boxes) {
   svg.setAttribute("class", "flow-arrows-overlay");
 
   const defs = document.createElementNS(SVG_NS, "defs");
-  for (let i = 0; i < PALETTE_SIZE; i++) {
-    const marker = document.createElementNS(SVG_NS, "marker");
-    marker.setAttribute("id", `flow-arrowhead-${i}`);
-    marker.setAttribute("viewBox", "0 0 10 10");
-    marker.setAttribute("refX", "8");
-    marker.setAttribute("refY", "5");
-    marker.setAttribute("markerUnits", "userSpaceOnUse");
-    marker.setAttribute("markerWidth", "16");
-    marker.setAttribute("markerHeight", "16");
-    marker.setAttribute("orient", "auto-start-reverse");
-    const arrowPath = document.createElementNS(SVG_NS, "path");
-    arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
-    arrowPath.setAttribute("class", `flow-color-${i}`);
-    marker.appendChild(arrowPath);
-    defs.appendChild(marker);
-  }
+  const marker = document.createElementNS(SVG_NS, "marker");
+  marker.setAttribute("id", "flow-arrowhead");
+  marker.setAttribute("viewBox", "0 0 10 10");
+  marker.setAttribute("refX", "8");
+  marker.setAttribute("refY", "5");
+  marker.setAttribute("markerUnits", "userSpaceOnUse");
+  marker.setAttribute("markerWidth", "12");
+  marker.setAttribute("markerHeight", "12");
+  marker.setAttribute("orient", "auto-start-reverse");
+  const arrowPath = document.createElementNS(SVG_NS, "path");
+  arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+  arrowPath.setAttribute("class", "flow-arrowhead-fill");
+  marker.appendChild(arrowPath);
+  defs.appendChild(marker);
   svg.appendChild(defs);
 
   for (const edge of edges) {
     const path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("class", `flow-arrow ${edge.colorClass}`);
-    // Inline style beats the .flow-color-N stylesheet rule (same specificity as
-    // .flow-arrow, but declared later) which would otherwise fill this open
-    // bezier path solid, closing it with an implicit line back to its start.
-    path.style.fill = "none";
-    path.setAttribute(
-      "marker-end",
-      `url(#flow-arrowhead-${edge.from.resultIndex % PALETTE_SIZE})`
-    );
+    path.setAttribute("class", "flow-arrow");
+    path.setAttribute("marker-end", "url(#flow-arrowhead)");
     edge.pathEl = path;
     svg.appendChild(path);
   }

@@ -24,6 +24,59 @@ function applyDefaultLayout(view, doc, minLine, maxLine) {
   view.dispatch({ effects: EditorView.scrollIntoView(midPos, { y: "center" }) });
 }
 
+function formatNodeLabel(displayNumbers) {
+  const sorted = [...displayNumbers].sort((a, b) => a - b);
+  const parts = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const cur = sorted[i];
+    if (cur !== prev + 1) {
+      parts.push(start === prev ? `${start}` : `${start}-${prev}`);
+      start = cur;
+    }
+    prev = cur;
+  }
+  return parts.join(",");
+}
+
+// Nodes that start at the exact same document position (same line/column,
+// e.g. a variable read on every loop iteration) would otherwise render as
+// stacked ::before badges at the same spot, hiding all but the first. Merge
+// them into a single decoration spanning the largest of the overlapping
+// nodes, labeled with the combined node range/list.
+function buildDecorationRanges(highlightRanges, closeFlowIds) {
+  const decorations = [];
+  let i = 0;
+  while (i < highlightRanges.length) {
+    let j = i;
+    while (j + 1 < highlightRanges.length && highlightRanges[j + 1].from === highlightRanges[i].from) {
+      j++;
+    }
+    if (j === i) {
+      const h = highlightRanges[i];
+      decorations.push({
+        from: h.from,
+        to: h.to,
+        flowId: h.flowId,
+        label: String(h.displayNumber),
+        showBadge: closeFlowIds.has(h.flowId),
+      });
+    } else {
+      const group = highlightRanges.slice(i, j + 1);
+      decorations.push({
+        from: group[0].from,
+        to: Math.max(...group.map((h) => h.to)),
+        flowId: group.map((h) => h.flowId).join(","),
+        label: formatNodeLabel(group.map((h) => h.displayNumber)),
+        showBadge: true,
+      });
+    }
+    i = j + 1;
+  }
+  return decorations;
+}
+
 function mountBox(container) {
   const payloadEl = container.querySelector(".codebox-payload");
   const data = JSON.parse(payloadEl.textContent);
@@ -55,14 +108,16 @@ function mountBox(container) {
 
   const highlightRanges = orderedHighlights.sort((a, b) => a.from - b.from || a.to - b.to);
 
-  const highlightExtension = highlightRanges.length
+  const decorationRanges = buildDecorationRanges(highlightRanges, closeFlowIds);
+
+  const highlightExtension = decorationRanges.length
     ? EditorView.decorations.of(
         Decoration.set(
-          highlightRanges.map((h) =>
+          decorationRanges.map((d) =>
             Decoration.mark({
-              class: closeFlowIds.has(h.flowId) ? "cm-node-highlight cm-node-badge" : "cm-node-highlight",
-              attributes: { "data-flow-id": h.flowId, "data-node-number": String(h.displayNumber) },
-            }).range(h.from, h.to)
+              class: d.showBadge ? "cm-node-highlight cm-node-badge" : "cm-node-highlight",
+              attributes: { "data-flow-id": d.flowId, "data-node-number": d.label },
+            }).range(d.from, d.to)
           )
         )
       )
