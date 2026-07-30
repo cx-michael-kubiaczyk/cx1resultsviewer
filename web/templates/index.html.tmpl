@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Cx1 Results Viewer</title>
+  <link rel="stylesheet" href="/web/static/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "codemirror": "https://esm.sh/codemirror@6.0.2?deps=@codemirror/view@6.43.7,@codemirror/state@6.7.1",
+      "@codemirror/state": "https://esm.sh/@codemirror/state@6.7.1",
+      "@codemirror/view": "https://esm.sh/@codemirror/view@6.43.7?deps=@codemirror/state@6.7.1"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>Cx1 Results Viewer</h1>
+
+  <form method="POST" action="/load" class="url-form">
+    <input type="text" name="url" value="{{.URL}}" size="120"
+           placeholder="Paste Checkmarx One result URL...">
+    <button type="submit">Go</button>
+  </form>
+
+  {{if .HasError}}
+    <p class="error">Error: {{.ErrorMessage}}</p>
+  {{end}}
+
+  {{if .HasResults}}
+    <div class="codeboxes">
+      {{range .CodeBoxes}}
+        <section class="codebox" data-role="codebox">
+          <div class="codebox-header">{{.FilePath}} : line {{.Line}}, col {{.Column}} ({{.QueryName}} / "{{.Name}}")</div>
+          <div class="codebox-editor"></div>
+          <script type="application/json" class="codebox-payload">{{.DataJSON}}</script>
+        </section>
+      {{end}}
+    </div>
+  {{end}}
+
+  <script type="module" src="/web/static/viewer.js"></script>
+</body>
+</html>

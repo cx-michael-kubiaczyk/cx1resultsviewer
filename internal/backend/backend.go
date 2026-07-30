@@ -2,6 +2,8 @@ package backend
 
 import (
 	"fmt"
+	"net/http"
+	"sync"
 
 	"github.com/cxpsemea/Cx1ClientGo"
 	"github.com/sirupsen/logrus"
@@ -12,6 +14,13 @@ type WebServer struct {
 	logger      *logrus.Logger
 	ScanSources CodeSet
 	Results     []Cx1ClientGo.ScanSASTResult
+
+	Addr   string
+	WebDir string
+
+	mu      sync.RWMutex
+	lastURL string
+	loadErr error
 }
 
 func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServer {
@@ -19,6 +28,8 @@ func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServe
 		Cx1Client:   cx1client,
 		logger:      logger,
 		ScanSources: NewCodeSet(),
+		Addr:        ":8080",
+		WebDir:      "web",
 	}
 }
 
@@ -40,7 +51,8 @@ func (m *WebServer) Shutdown() {
 }
 
 func (m *WebServer) Run() error {
-	return m.test()
+	m.logger.Infof("Starting HTTP server on %s (serving assets from %q)", m.Addr, m.WebDir)
+	return http.ListenAndServe(m.Addr, m.routes())
 }
 
 func (m *WebServer) test() error {

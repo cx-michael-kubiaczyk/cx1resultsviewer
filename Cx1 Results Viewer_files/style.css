@@ -1,0 +1,6 @@
+body { font-family: sans-serif; margin: 1.5rem; }
+.url-form input[type=text] { font-family: monospace; }
+.error { color: #b00020; }
+.codebox { margin-bottom: 1.5rem; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; }
+.codebox-header { background: #f4f4f4; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.9rem; border-bottom: 1px solid #ccc; }
+.cm-node-highlight { background: #ffe08a; outline: 1px solid #d9a441; }
