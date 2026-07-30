@@ -16,7 +16,7 @@ go mod tidy
 
 ## Architecture
 
-This is an early-stage CLI prototype that fetches Checkmarx One SAST scan results and annotates the relevant source files with inline data-flow step comments.
+This is an early-stage CLI prototype that fetches Checkmarx One SAST scan results and return the relevant source files.
 
 **Module:** `cx1resultsviewer`  
 **Key dependency:** `github.com/cxpsemea/Cx1ClientGo` — the Checkmarx One API client
@@ -34,13 +34,13 @@ main.go
               → GetAllScanSASTResultsFiltered()
               → GetScannedFileSourceByID() per result node
               → CodeSet.AddFile() / AugmentFile()
-      → CodeSet.GetSources()       # prints annotated source to stdout
+      → CodeSet.GetSources()       # prints source to stdout
 ```
 
 ### Core types (`internal/backend/`)
 
-- **`FileSource`** — holds source lines (`[]string`) and an `Augs` map of `lineNumber → []label`. `Code()` renders augmented source by appending inline comments like `// Finding Reflected_XSS: step 1`.
-- **`CodeSet`** — `map[filePath]*FileSource`; the full annotated source set for a scan result.
+- **`FileSource`** — holds source code
+- **`CodeSet`** — `map[filePath]string`; the full source set for a scan result.
 - **`WebServer`** — top-level struct holding the `Cx1Client`, logger, and `CodeSet`. Named for a planned HTTP server that is not yet built; currently runs as a one-shot CLI.
 - **`util.go`** — URL parsing (`extractIDFromURL`) and the main API orchestration (`createCodeExtract`).
 

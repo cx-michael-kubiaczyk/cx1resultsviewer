@@ -51,8 +51,6 @@ func (m *WebServer) createCodeExtract(sid, rid string) error {
 				}
 				m.ScanSources.AddFile(n.FileName, fileSource)
 			}
-
-			m.ScanSources.AugmentFile(n.FileName, n.Line, AugSrc_Finding(result.Data.QueryName), fmt.Sprintf("step %d", i+1))
 		}
 	}
 	return nil
