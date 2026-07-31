@@ -14,7 +14,7 @@ function computeRange(doc, line, column, length) {
 function applyDefaultLayout(view, doc, minLine, maxLine) {
   const lineHeight = view.defaultLineHeight;
   const displayLines = Math.min(Math.max(Number(maxLine) - Number(minLine) + 1, 1), 20);
-  const height = Math.ceil(lineHeight * displayLines);
+  const height = Math.ceil(lineHeight * displayLines) + 30;
   view.dom.style.height = height + "px";
   view.requestMeasure();
 
@@ -169,6 +169,7 @@ function wireButtons(box) {
   const toggleBtn = box.containerEl.querySelector('[data-action="toggle-list"]');
   toggleBtn.addEventListener("click", () => {
     const hidden = box.stepsEl.classList.toggle("is-hidden");
+    box.headerEl.classList.toggle("is-collapsed", hidden);
     toggleBtn.setAttribute("aria-pressed", String(!hidden));
   });
 }

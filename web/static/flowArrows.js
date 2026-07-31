@@ -65,7 +65,7 @@ function resolveEndpoint(entry, pos, preferRight) {
 
   const before = pos < view.viewport.from || (coords && coords.top < rect.top);
   return {
-    x: (coords.right + coords.left)/2,
+    x: coords ? (coords.right + coords.left) / 2 : (rect.left + rect.right) / 2,
     y: before ? rect.top + 6 : rect.bottom - 6,
     snapped: true,
   };
@@ -120,13 +120,16 @@ export function initFlowArrows(boxes) {
     for (const edge of edges) {
       const p1 = resolveEndpoint(edge.from, edge.from.to, true);
       const p2 = resolveEndpoint(edge.to, edge.to.from, false);
+      const hidden = p1.snapped && p2.snapped;
+      edge.pathEl.style.display = hidden ? "none" : "";
+      if (hidden) continue;
       edge.pathEl.setAttribute("d", pathFor(p1, p2));
       edge.pathEl.classList.toggle("snapped", p1.snapped || p2.snapped);
     }
   }
 
   let rafId = null;
-  function scheduleRedraw() {
+  function requestMeasure() {
     if (rafId) return;
     rafId = requestAnimationFrame(() => {
       rafId = null;
@@ -134,14 +137,17 @@ export function initFlowArrows(boxes) {
     });
   }
 
-  window.addEventListener("scroll", scheduleRedraw, { passive: true });
-  window.addEventListener("resize", scheduleRedraw);
+  window.addEventListener("scroll", requestMeasure, { passive: true });
+  window.addEventListener("resize", requestMeasure);
   for (const box of boxes) {
-    box.view.scrollDOM.addEventListener("scroll", scheduleRedraw, { passive: true });
+    box.view.scrollDOM.addEventListener("scroll", requestMeasure, { passive: true });
   }
 
-  const ro = new ResizeObserver(scheduleRedraw);
-  for (const box of boxes) ro.observe(box.containerEl);
+  const ro = new ResizeObserver(requestMeasure);
+  for (const box of boxes) {
+    ro.observe(box.containerEl);
+    ro.observe(box.view.scrollDOM);
+  }
 
   redrawAll();
 }

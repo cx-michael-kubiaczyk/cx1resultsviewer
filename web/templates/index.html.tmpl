@@ -28,26 +28,48 @@
   {{end}}
 
   {{if .HasResults}}
+    <div class="findings">
+    <table>
+    <tr><th>Query</th><th>ResultID</th><th>SimID</th><th>Source File</th><th>Source Object</th><th>Dest File</th><th>Dest Object</th></tr>
+    {{range .Findings}}
+        <tr>
+            <td>{{.Data.QueryName}}</td>
+            <td>{{.ResultID}}</td>
+            <td>{{.SimilarityID}}</td>
+            <td>{{.FirstNode.FileName}}:{{.FirstNode.Line}}</td>
+            <td>{{.FirstNode.Name}}</td>
+            <td>{{.LastNode.FileName}}:{{.LastNode.Line}}</td>
+            <td>{{.LastNode.Name}}</td>
+        </tr>
+    <!-- 
+        For each finding, I want to display: 
+        .Data.QueryName, .Data.ResultID, .SimilarityID, .FirstNode.FileName : .FirstNode.Line, .FirstNode.Name, .LastNode.FileName : .LastNode.Line, .LastNode.Name
+
+    -->
+    {{end}}
+    </table>
+    </div>
+
     <div class="codeboxes">
       {{range .CodeBoxes}}
         <section class="codebox" data-role="codebox">
           <div class="codebox-header">
-            <div class="codebox-header-top">
-              <div class="codebox-buttons">
-                <button type="button" class="codebox-btn" data-action="maximize" title="Maximize" aria-label="Maximize">
-                  <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 2h5v2H4v3H2V2zm12 0v5h-2V4h-3V2h5zM2 14v-5h2v3h3v2H2zm12 0h-5v-2h3v-3h2v5z" fill="currentColor"/></svg>
-                </button>
-                <button type="button" class="codebox-btn" data-action="reset" title="Reset size" aria-label="Reset size">
-                  <svg viewBox="0 0 16 16" width="15" height="15"><path d="M13.65 2.35A6.5 6.5 0 1 0 15 8h-1.5a5 5 0 1 1-1.06-3.54L10 7h5V2l-1.35 1.35z" fill="currentColor"/></svg>
-                </button>
-                <button type="button" class="codebox-btn" data-action="toggle-list" title="Toggle steps" aria-label="Toggle steps" aria-pressed="true">
-                  <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z" fill="currentColor"/></svg>
-                </button>
-              </div>
+            <div class="codebox-title-wrap">
+              <span class="codebox-title">{{.FilePath}}</span>
             </div>
             <div class="codebox-header-body">
-              <div class="codebox-title-wrap">
-                <span class="codebox-title">{{.FilePath}}</span>
+              <div class="codebox-header-top">
+                <div class="codebox-buttons">
+                  <button type="button" class="codebox-btn" data-action="toggle-list" title="Toggle steps" aria-label="Toggle steps" aria-pressed="true">
+                    <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z" fill="currentColor"/></svg>
+                  </button>
+                  <button type="button" class="codebox-btn" data-action="maximize" title="Maximize" aria-label="Maximize">
+                    <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 2h5v2H4v3H2V2zm12 0v5h-2V4h-3V2h5zM2 14v-5h2v3h3v2H2zm12 0h-5v-2h3v-3h2v5z" fill="currentColor"/></svg>
+                  </button>
+                  <button type="button" class="codebox-btn" data-action="reset" title="Reset size" aria-label="Reset size">
+                    <svg viewBox="0 0 16 16" width="15" height="15"><path d="M13.65 2.35A6.5 6.5 0 1 0 15 8h-1.5a5 5 0 1 1-1.06-3.54L10 7h5V2l-1.35 1.35z" fill="currentColor"/></svg>
+                  </button>
+                </div>
               </div>
               <ol class="codebox-steps">
                 {{range .Highlights}}

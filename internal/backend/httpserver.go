@@ -94,6 +94,7 @@ type PageViewModel struct {
 	HasError     bool
 	ErrorMessage string
 	HasResults   bool
+	Findings     []Cx1ClientGo.ScanSASTResult
 	CodeBoxes    []CodeBoxViewModel
 }
 
@@ -117,7 +118,7 @@ type codeBoxPayload struct {
 }
 
 func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSASTResult, sources *CodeSet) (PageViewModel, error) {
-	vm := PageViewModel{URL: url}
+	vm := PageViewModel{URL: url, Findings: results}
 	if loadErr != nil {
 		vm.HasError = true
 		vm.ErrorMessage = loadErr.Error()
