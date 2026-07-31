@@ -32,8 +32,7 @@
       {{range .CodeBoxes}}
         <section class="codebox" data-role="codebox">
           <div class="codebox-header">
-            <div class="codebox-header-row">
-              <span class="codebox-title">{{.FilePath}} : lines {{.MinLine}}-{{.MaxLine}} ({{.QueryName}})</span>
+            <div class="codebox-header-top">
               <div class="codebox-buttons">
                 <button type="button" class="codebox-btn" data-action="maximize" title="Maximize" aria-label="Maximize">
                   <svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 2h5v2H4v3H2V2zm12 0v5h-2V4h-3V2h5zM2 14v-5h2v3h3v2H2zm12 0h-5v-2h3v-3h2v5z" fill="currentColor"/></svg>
@@ -46,15 +45,25 @@
                 </button>
               </div>
             </div>
-            <ol class="codebox-steps">
-              {{range .Highlights}}
-                <li>{{.Name}} <span class="codebox-step-loc">(line {{.Line}}, col {{.Column}})</span></li>
-              {{end}}
-            </ol>
+            <div class="codebox-header-body">
+              <div class="codebox-title-wrap">
+                <span class="codebox-title">{{.FilePath}}</span>
+              </div>
+              <ol class="codebox-steps">
+                {{range .Highlights}}
+                  <li>
+                    <span class="codebox-step-name">{{.Name}}</span>
+                    <span class="codebox-step-loc">(line {{.Line}}, col {{.Column}})</span>
+                  </li>
+                {{end}}
+              </ol>
+            </div>
           </div>
-          <div class="codebox-resize-handle codebox-resize-top" data-role="resize-handle" data-edge="top" aria-hidden="true"></div>
-          <div class="codebox-editor"></div>
-          <div class="codebox-resize-handle codebox-resize-bottom" data-role="resize-handle" data-edge="bottom" aria-hidden="true"></div>
+          <div class="codebox-body">
+            <div class="codebox-resize-handle codebox-resize-top" data-role="resize-handle" data-edge="top" aria-hidden="true"></div>
+            <div class="codebox-editor"></div>
+            <div class="codebox-resize-handle codebox-resize-bottom" data-role="resize-handle" data-edge="bottom" aria-hidden="true"></div>
+          </div>
           <script type="application/json" class="codebox-payload">{{.DataJSON}}</script>
         </section>
       {{end}}

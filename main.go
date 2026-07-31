@@ -1,11 +1,9 @@
 package main
 
 import (
-	"crypto/tls"
 	"cx1resultsviewer/internal/backend"
 	"flag"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -28,15 +26,6 @@ func main() {
 	LogLevel := flag.String("log", "INFO", "Log level: TRACE, DEBUG, INFO, WARNING, ERROR, FATAL")
 
 	httpClient := &http.Client{}
-	if false {
-		proxyURL, _ := url.Parse("http://127.0.0.1:8080")
-		transport := &http.Transport{}
-		transport.Proxy = http.ProxyURL(proxyURL)
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		httpClient.Transport = transport
-		logger.Infof("Using proxy")
-	}
-
 	cx1client, err := Cx1ClientGo.NewClient(httpClient, logger)
 	if err != nil {
 		logger.Fatalf("Error creating client: %s", err)
