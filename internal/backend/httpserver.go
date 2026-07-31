@@ -91,13 +91,21 @@ type CodeBoxViewModel struct {
 	DataJSON    template.JS
 }
 
+// FileGroupViewModel collects consecutive CodeBoxes that share a FilePath so
+// the template can render them as a single visual block with one shared
+// filename heading.
+type FileGroupViewModel struct {
+	FilePath string
+	Boxes    []CodeBoxViewModel
+}
+
 type PageViewModel struct {
 	URL          string
 	HasError     bool
 	ErrorMessage string
 	HasResults   bool
 	Findings     []Cx1ClientGo.ScanSASTResult
-	CodeBoxes    []CodeBoxViewModel
+	FileGroups   []FileGroupViewModel
 }
 
 type highlightPayload struct {
@@ -126,6 +134,7 @@ func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSAS
 		vm.ErrorMessage = loadErr.Error()
 	}
 
+	var boxes []CodeBoxViewModel
 	for ri, result := range results {
 		for gi, group := range groupResultNodes(ri, result) {
 			boxID := fmt.Sprintf("box-%d-%d", ri, gi)
@@ -165,7 +174,7 @@ func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSAS
 			if err != nil {
 				return vm, err
 			}
-			vm.CodeBoxes = append(vm.CodeBoxes, CodeBoxViewModel{
+			boxes = append(boxes, CodeBoxViewModel{
 				BoxID:       boxID,
 				ResultIndex: ri,
 				FilePath:    group.FilePath,
@@ -177,6 +186,15 @@ func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSAS
 			})
 		}
 	}
-	vm.HasResults = len(vm.CodeBoxes) > 0
+
+	for _, box := range boxes {
+		if n := len(vm.FileGroups); n > 0 && vm.FileGroups[n-1].FilePath == box.FilePath {
+			vm.FileGroups[n-1].Boxes = append(vm.FileGroups[n-1].Boxes, box)
+		} else {
+			vm.FileGroups = append(vm.FileGroups, FileGroupViewModel{FilePath: box.FilePath, Boxes: []CodeBoxViewModel{box}})
+		}
+	}
+
+	vm.HasResults = len(boxes) > 0
 	return vm, nil
 }

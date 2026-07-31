@@ -11,10 +11,12 @@ function computeRange(doc, line, column, length) {
   return { from, to };
 }
 
+const MIN_CODEBOX_HEIGHT = 150;
+
 function applyDefaultLayout(view, doc, minLine, maxLine) {
   const lineHeight = view.defaultLineHeight;
   const displayLines = Math.min(Math.max(Number(maxLine) - Number(minLine) + 1, 1), 20);
-  const height = Math.ceil(lineHeight * displayLines) + 30;
+  const height = Math.max(Math.ceil(lineHeight * displayLines) + 30, MIN_CODEBOX_HEIGHT);
   view.dom.style.height = height + "px";
   view.requestMeasure();
 
@@ -77,11 +79,19 @@ function buildDecorationRanges(highlightRanges, closeFlowIds) {
   return decorations;
 }
 
+// The header's node-list can be much taller than the code area, and it has
+// a hardcoded width, so instead of letting it stretch the whole codebox we
+// pin it to the body's rendered height and let it scroll internally.
+function syncHeaderHeight(headerEl, bodyEl) {
+  headerEl.style.height = bodyEl.getBoundingClientRect().height + "px";
+}
+
 function mountBox(container) {
   const payloadEl = container.querySelector(".codebox-payload");
   const data = JSON.parse(payloadEl.textContent);
   const mountEl = container.querySelector(".codebox-editor");
   const headerEl = container.querySelector(".codebox-header");
+  const bodyEl = container.querySelector(".codebox-body");
   const stepsEl = container.querySelector(".codebox-steps");
 
   const doc = Text.of(data.source.split("\n"));
@@ -138,6 +148,7 @@ function mountBox(container) {
 
   requestAnimationFrame(() => {
     applyDefaultLayout(view, doc, data.minLine, data.maxLine);
+    syncHeaderHeight(headerEl, bodyEl);
   });
 
   return {
@@ -149,6 +160,7 @@ function mountBox(container) {
     maxLine: data.maxLine,
     containerEl: container,
     headerEl,
+    bodyEl,
     stepsEl,
     editorEl: mountEl,
     highlights: highlightRanges,
@@ -158,24 +170,30 @@ function mountBox(container) {
 function wireButtons(box) {
   box.containerEl.querySelector('[data-action="maximize"]').addEventListener("click", () => {
     const top = box.editorEl.getBoundingClientRect().top;
-    box.view.dom.style.height = Math.max(window.innerHeight - top - 16, 40) + "px";
+    box.view.dom.style.height = Math.max(window.innerHeight - top - 16, MIN_CODEBOX_HEIGHT) + "px";
     box.view.requestMeasure();
+    syncHeaderHeight(box.headerEl, box.bodyEl);
   });
 
   box.containerEl.querySelector('[data-action="reset"]').addEventListener("click", () => {
     applyDefaultLayout(box.view, box.doc, box.minLine, box.maxLine);
+    syncHeaderHeight(box.headerEl, box.bodyEl);
   });
 
   const toggleBtn = box.containerEl.querySelector('[data-action="toggle-list"]');
   toggleBtn.addEventListener("click", () => {
-    const hidden = box.stepsEl.classList.toggle("is-hidden");
-    box.headerEl.classList.toggle("is-collapsed", hidden);
-    toggleBtn.setAttribute("aria-pressed", String(!hidden));
+    const hidden = !box.stepsEl.classList.contains("is-hidden");
+    const groupEl = box.containerEl.closest('[data-role="codebox-group"]');
+    const rows = groupEl ? groupEl.querySelectorAll('[data-role="codebox"]') : [box.containerEl];
+    rows.forEach((row) => {
+      row.querySelector(".codebox-steps").classList.toggle("is-hidden", hidden);
+      row.querySelector(".codebox-header").classList.toggle("is-collapsed", hidden);
+      row.querySelector('[data-action="toggle-list"]').setAttribute("aria-pressed", String(!hidden));
+    });
   });
 }
 
 function wireResizeHandles(box) {
-  const MIN_HEIGHT = Math.max(box.view.defaultLineHeight * 1.5, 24);
   box.containerEl.querySelectorAll('[data-role="resize-handle"]').forEach((handle) => {
     const sign = handle.dataset.edge === "bottom" ? 1 : -1;
 
@@ -189,7 +207,8 @@ function wireResizeHandles(box) {
 
       function onMove(ev) {
         const delta = (ev.clientY - startY) * sign;
-        box.view.dom.style.height = Math.max(startHeight + delta, MIN_HEIGHT) + "px";
+        box.view.dom.style.height = Math.max(startHeight + delta, MIN_CODEBOX_HEIGHT) + "px";
+        syncHeaderHeight(box.headerEl, box.bodyEl);
       }
       function onUp(ev) {
         handle.releasePointerCapture(ev.pointerId);
