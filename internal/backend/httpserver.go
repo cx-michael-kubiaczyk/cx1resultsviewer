@@ -28,8 +28,10 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	m.logger.Infof("Handling url: %s", m.lastURL)
 	vm, err := buildPageViewModel(m.lastURL, m.loadErr, m.Results, &m.ScanSources)
 	if err != nil {
+		m.logger.Errorf("Failed to prepare page: %s", err)
 		http.Error(w, "failed to prepare page: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

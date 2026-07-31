@@ -44,12 +44,12 @@ func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTRe
 		m.logger.Debugf("Result: %+v", result)
 		for i, n := range result.Data.Nodes {
 			m.logger.Debugf("Node %d: %+v", i, n)
-			if !m.ScanSources.HasFile(n.FileName) {
+			if !m.ScanSources.HasFile(sid, n.FileName) {
 				fileSource, err := m.Cx1Client.GetScannedFileSourceByID(sid, n.FileName)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get file source: %v", err)
 				}
-				m.ScanSources.AddFile(n.FileName, fileSource)
+				m.ScanSources.AddFile(sid, n.FileName, fileSource)
 			}
 		}
 	}
