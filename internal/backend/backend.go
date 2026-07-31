@@ -23,12 +23,12 @@ type WebServer struct {
 	loadErr error
 }
 
-func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger) WebServer {
+func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger, address string) WebServer {
 	return WebServer{
 		Cx1Client:   cx1client,
 		logger:      logger,
 		ScanSources: NewCodeSet(),
-		Addr:        "127.0.0.1:8080",
+		Addr:        address,
 		WebDir:      "web",
 	}
 }

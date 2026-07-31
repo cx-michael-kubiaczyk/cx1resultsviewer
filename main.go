@@ -24,6 +24,7 @@ func main() {
 
 	logger.Info("Starting")
 	LogLevel := flag.String("log", "INFO", "Log level: TRACE, DEBUG, INFO, WARNING, ERROR, FATAL")
+	Address := flag.String("address", "127.0.0.1:8080", "Listen address")
 
 	httpClient := &http.Client{}
 	cx1client, err := Cx1ClientGo.NewClient(httpClient, logger)
@@ -47,7 +48,7 @@ func main() {
 		logger.SetLevel(logrus.FatalLevel)
 	}
 
-	server := backend.NewServer(cx1client, logger)
+	server := backend.NewServer(cx1client, logger, *Address)
 	defer server.Shutdown()
 
 	if err = server.Run(); err != nil {
