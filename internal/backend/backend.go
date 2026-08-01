@@ -14,6 +14,7 @@ type WebServer struct {
 	logger      *logrus.Logger
 	ScanSources CodeSet
 	Results     []Cx1ClientGo.ScanSASTResult
+	Triages     []Cx1ClientGo.SASTResultsPredicates
 
 	Addr   string
 	WebDir string
@@ -34,7 +35,7 @@ func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger, address 
 }
 
 func (m *WebServer) LoadResults(path string) error {
-	_, sid, rid, err := extractIDFromURL(path)
+	pid, sid, rid, err := extractIDFromURL(path)
 	if err != nil {
 		return err
 	}
@@ -42,6 +43,13 @@ func (m *WebServer) LoadResults(path string) error {
 	m.Results, err = m.createCodeExtract(sid, rid)
 	if err != nil {
 		return fmt.Errorf("failed to create code extract: %v", err)
+	}
+
+	if len(m.Results) == 1 {
+		m.Triages, err = m.Cx1Client.GetSASTResultsPredicatesByID(m.Results[0].SimilarityID, pid, sid)
+		if err != nil {
+			return fmt.Errorf("failed to get predicates for similarity ID %s: %v", m.Results[0].SimilarityID, err)
+		}
 	}
 
 	return nil

@@ -29,7 +29,7 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	defer m.mu.RUnlock()
 
 	m.logger.Infof("Handling url: %s", m.lastURL)
-	vm, err := buildPageViewModel(m.lastURL, m.loadErr, m.Results, &m.ScanSources)
+	vm, err := buildPageViewModel(m.lastURL, m.loadErr, m.Results, m.Triages, &m.ScanSources)
 	if err != nil {
 		m.logger.Errorf("Failed to prepare page: %s", err)
 		http.Error(w, "failed to prepare page: "+err.Error(), http.StatusInternalServerError)
@@ -105,6 +105,7 @@ type PageViewModel struct {
 	ErrorMessage string
 	HasResults   bool
 	Findings     []Cx1ClientGo.ScanSASTResult
+	Triages      []Cx1ClientGo.SASTResultsPredicates
 	FileGroups   []FileGroupViewModel
 }
 
@@ -127,8 +128,12 @@ type codeBoxPayload struct {
 	Highlights  []highlightPayload `json:"highlights"`
 }
 
-func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSASTResult, sources *CodeSet) (PageViewModel, error) {
-	vm := PageViewModel{URL: url, Findings: results}
+func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
+	vm := PageViewModel{
+		URL:      url,
+		Findings: results,
+		Triages:  triages,
+	}
 	if loadErr != nil {
 		vm.HasError = true
 		vm.ErrorMessage = loadErr.Error()

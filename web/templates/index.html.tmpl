@@ -30,22 +30,21 @@
   {{if .HasResults}}
     <div class="findings">
     <table>
-    <tr><th>Query</th><th>ResultID</th><th>SimID</th><th>Source File</th><th>Source Object</th><th>Dest File</th><th>Dest Object</th></tr>
+    <tr><th>Query</th><th>SimID</th><th>Source File</th><th>Source Object</th><th>Dest File</th><th>Dest Object</th></tr>
     {{range .Findings}}
         <tr>
             <td>{{.Data.QueryName}}</td>
-            <td>{{.ResultID}}</td>
             <td>{{.SimilarityID}}</td>
-            <td>{{.FirstNode.FileName}}:{{.FirstNode.Line}}</td>
+            <td title="{{.FirstNode.FileName}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.FirstNode.FileName}}:{{.FirstNode.Line}}</td>
             <td>{{.FirstNode.Name}}</td>
-            <td>{{.LastNode.FileName}}:{{.LastNode.Line}}</td>
+            <td title="{{.LastNode.FileName}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.LastNode.FileName}}:{{.LastNode.Line}}</td>
             <td>{{.LastNode.Name}}</td>
         </tr>
-    <!-- 
-        For each finding, I want to display: 
-        .Data.QueryName, .Data.ResultID, .SimilarityID, .FirstNode.FileName : .FirstNode.Line, .FirstNode.Name, .LastNode.FileName : .LastNode.Line, .LastNode.Name
-
-    -->
+    {{end}}    
+    {{range .Triages}}
+    <tr style="padding-top:3px;padding-bottom:3px;border-top:1px solid grey;"><td colspan="6">
+        [{{.CreatedAt}}] <strong>{{.CreatedBy}}</strong>:<br><i>{{.Comment}}</i>
+    </td></tr>
     {{end}}
     </table>
     </div>
