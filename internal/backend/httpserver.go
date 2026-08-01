@@ -6,9 +6,16 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/cxpsemea/Cx1ClientGo"
 )
+
+var templateFuncs = template.FuncMap{
+	"trimLeadingSlash": func(s string) string {
+		return strings.TrimPrefix(s, "/")
+	},
+}
 
 func (m *WebServer) routes() http.Handler {
 	mux := http.NewServeMux()
@@ -37,7 +44,7 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmplPath := filepath.Join(m.WebDir, "templates", "index.html.tmpl")
-	tmpl, err := template.ParseFiles(tmplPath)
+	tmpl, err := template.New(filepath.Base(tmplPath)).Funcs(templateFuncs).ParseFiles(tmplPath)
 	if err != nil {
 		m.logger.Errorf("failed to parse template %s: %v", tmplPath, err)
 		http.Error(w, "template error", http.StatusInternalServerError)

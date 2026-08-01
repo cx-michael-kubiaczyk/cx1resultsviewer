@@ -35,9 +35,9 @@
         <tr>
             <td>{{.Data.QueryName}}</td>
             <td>{{.SimilarityID}}</td>
-            <td title="{{.FirstNode.FileName}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.FirstNode.FileName}}:{{.FirstNode.Line}}</td>
+            <td title="{{.FirstNode.FileName | trimLeadingSlash}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.FirstNode.FileName | trimLeadingSlash}}:{{.FirstNode.Line}}</td>
             <td>{{.FirstNode.Name}}</td>
-            <td title="{{.LastNode.FileName}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.LastNode.FileName}}:{{.LastNode.Line}}</td>
+            <td title="{{.LastNode.FileName | trimLeadingSlash}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.LastNode.FileName | trimLeadingSlash}}:{{.LastNode.Line}}</td>
             <td>{{.LastNode.Name}}</td>
         </tr>
     {{end}}    
@@ -77,7 +77,7 @@
                       {{range .Highlights}}
                         <li>
                           <span class="codebox-step-name">{{.Name}}</span>
-                          <span class="codebox-step-loc">(line {{.Line}}, col {{.Column}})</span>
+                          <span class="codebox-step-loc">({{.Line}}:{{.Column}})</span>
                         </li>
                       {{end}}
                     </ol>

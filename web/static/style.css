@@ -142,6 +142,6 @@ body { font-family: sans-serif; margin: 1.5rem; }
 }
 
 .flow-arrows-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
-.flow-arrow { fill: none; stroke: #3c9d40; stroke-width: 1.5; opacity: 0.85; }
+.flow-arrow { fill: none; stroke: #3c9d40; stroke-width: 1.5; opacity: 0.75; }
 .flow-arrow.snapped { stroke-dasharray: 4 3; }
 .flow-arrowhead-fill { fill: #3c9d40; stroke: #3c9d40; }
