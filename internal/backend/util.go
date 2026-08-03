@@ -43,13 +43,15 @@ func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTRe
 	for _, result := range results {
 		m.logger.Debugf("Result: %+v", result)
 		for i, n := range result.Data.Nodes {
-			m.logger.Debugf("Node %d: %+v", i, n)
 			if !m.ScanSources.HasFile(sid, n.FileName) {
+				m.logger.Debugf("Node %d: in new file %s:%d,%d '%s'", i, n.FileName, n.Line, n.Column, n.Name)
 				fileSource, err := m.Cx1Client.GetScannedFileSourceByID(sid, n.FileName)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get file source: %v", err)
 				}
 				m.ScanSources.AddFile(sid, n.FileName, fileSource)
+			} else {
+				m.logger.Debugf("Node %d: in cached file %s:%d,%d '%s'", i, n.FileName, n.Line, n.Column, n.Name)
 			}
 		}
 	}

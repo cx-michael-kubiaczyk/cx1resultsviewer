@@ -19,9 +19,11 @@ type WebServer struct {
 	Addr   string
 	WebDir string
 
-	mu      sync.RWMutex
-	lastURL string
-	loadErr error
+	mu        sync.RWMutex
+	lastURL   string
+	scanID    string
+	projectID string
+	loadErr   error
 }
 
 func NewServer(cx1client *Cx1ClientGo.Cx1Client, logger *logrus.Logger, address string) WebServer {
@@ -39,6 +41,9 @@ func (m *WebServer) LoadResults(path string) error {
 	if err != nil {
 		return err
 	}
+
+	m.projectID = pid
+	m.scanID = sid
 
 	m.Results, err = m.createCodeExtract(sid, rid)
 	if err != nil {
@@ -73,7 +78,7 @@ func (m *WebServer) test() error {
 		fmt.Printf("Result: %s\n", result.ResultID)
 		for i, node := range result.Data.Nodes {
 			fmt.Printf("Node %d: %s line %d col %d length %d - '%s'\n", i+1, node.FileName, node.Line, node.Column, node.Length, node.Name)
-			fmt.Println(m.ScanSources.GetFile(node.FileName))
+			fmt.Println(m.ScanSources.GetFile("0f562295-d7a8-49d6-bd37-82177647633b", node.FileName))
 		}
 	}
 	return nil
