@@ -3,7 +3,6 @@ package backend
 import (
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const defaultCacheDir = "./cache"
@@ -25,39 +24,32 @@ func (cs *CodeSet) cachePath(sid, path string) string {
 }
 
 func (cs *CodeSet) AddFile(sid, path, code string) {
-	cs.Files[path] = code
-
 	cachePath := cs.cachePath(sid, path)
+	cs.Files[cachePath] = code
 	if err := os.MkdirAll(filepath.Dir(cachePath), 0755); err == nil {
 		_ = os.WriteFile(cachePath, []byte(code), 0644)
 	}
 }
 
-func (cs *CodeSet) GetFile(path string) string {
-	if src, ok := cs.Files[path]; ok {
+func (cs *CodeSet) GetFile(sid, path string) string {
+	if src, ok := cs.Files[cs.cachePath(sid, path)]; ok {
 		return src
 	}
 	return ""
 }
 
-func (cs *CodeSet) GetSources() string {
-	var str strings.Builder
-	for _, code := range cs.Files {
-		str.WriteString(code)
-		str.WriteString("\n")
-	}
-	return str.String()
-}
-
 func (cs *CodeSet) HasFile(sid, path string) bool {
-	if _, ok := cs.Files[path]; ok {
+
+	cachePath := cs.cachePath(sid, path)
+
+	if _, ok := cs.Files[cachePath]; ok {
 		return true
 	}
 
-	data, err := os.ReadFile(cs.cachePath(sid, path))
+	data, err := os.ReadFile(cachePath)
 	if err != nil {
 		return false
 	}
-	cs.Files[path] = string(data)
+	cs.Files[cachePath] = string(data)
 	return true
 }

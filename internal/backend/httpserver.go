@@ -36,7 +36,7 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	defer m.mu.RUnlock()
 
 	m.logger.Infof("Handling url: %s", m.lastURL)
-	vm, err := buildPageViewModel(m.lastURL, m.loadErr, m.Results, m.Triages, &m.ScanSources)
+	vm, err := buildPageViewModel(m.lastURL, m.scanID, m.loadErr, m.Results, m.Triages, &m.ScanSources)
 	if err != nil {
 		m.logger.Errorf("Failed to prepare page: %s", err)
 		http.Error(w, "failed to prepare page: "+err.Error(), http.StatusInternalServerError)
@@ -135,7 +135,7 @@ type codeBoxPayload struct {
 	Highlights  []highlightPayload `json:"highlights"`
 }
 
-func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
+func buildPageViewModel(url, sid string, loadErr error, results []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
 	vm := PageViewModel{
 		URL:      url,
 		Findings: results,
@@ -176,7 +176,7 @@ func buildPageViewModel(url string, loadErr error, results []Cx1ClientGo.ScanSAS
 			payload := codeBoxPayload{
 				BoxID:       boxID,
 				FilePath:    group.FilePath,
-				Source:      sources.GetFile(group.FilePath),
+				Source:      sources.GetFile(sid, group.FilePath),
 				ResultIndex: ri,
 				MinLine:     minLine,
 				MaxLine:     maxLine,
