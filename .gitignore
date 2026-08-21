@@ -1,6 +1,5 @@
 *.txt
 /cmd/devtest/
-*.png
 *.html
 cache
 cx1resultsviewer
