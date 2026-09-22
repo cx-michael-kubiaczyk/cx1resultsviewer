@@ -43,6 +43,19 @@ func (m *WebServer) getAllFindings(scanId string, queryId uint64) ([]Cx1ClientGo
 	return results, nil
 }
 
+// escapeFilePathForURL percent-encodes each segment of a file path so it can
+// be safely embedded in a request URL. Characters such as '#' or '?' are
+// otherwise interpreted as URL syntax (fragment/query delimiters) rather than
+// literal path characters, truncating or corrupting the request when a
+// scanned file lives under a folder like "C#".
+func escapeFilePathForURL(path string) string {
+	segments := strings.Split(path, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	return strings.Join(segments, "/")
+}
+
 func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTResult, error) {
 	filter := Cx1ClientGo.ScanSASTResultsFilter{
 		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 1},
@@ -60,7 +73,7 @@ func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTRe
 		for i, n := range result.Data.Nodes {
 			if !m.ScanSources.HasFile(sid, n.FileName) {
 				m.logger.Debugf("Node %d: in new file %s:%d,%d '%s'", i, n.FileName, n.Line, n.Column, n.Name)
-				fileSource, err := m.Cx1Client.GetScannedFileSourceByID(sid, n.FileName)
+				fileSource, err := m.Cx1Client.GetScannedFileSourceByID(sid, escapeFilePathForURL(n.FileName))
 				if err != nil {
 					return nil, fmt.Errorf("failed to get file source: %v", err)
 				}
