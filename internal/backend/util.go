@@ -33,6 +33,7 @@ func (m *WebServer) getAllFindings(scanId string, queryId uint64) ([]Cx1ClientGo
 		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 100},
 		ScanID:     scanId,
 		QueryIDs:   []uint64{queryId},
+		State:      []string{"NOT_EXPLOITABLE"},
 	}
 
 	_, results, err := m.Cx1Client.GetAllScanSASTResultsFiltered(filter)
