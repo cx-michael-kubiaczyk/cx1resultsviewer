@@ -11,6 +11,8 @@ import (
 	"github.com/cxpsemea/Cx1ClientGo"
 )
 
+const nodeMatchIDSep = ","
+
 var templateFuncs = template.FuncMap{
 	"trimLeadingSlash": func(s string) string {
 		return strings.TrimPrefix(s, "/")
@@ -36,7 +38,7 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	defer m.mu.RUnlock()
 
 	m.logger.Infof("Handling url: %s", m.lastURL)
-	vm, err := buildPageViewModel(m.lastURL, m.scanID, m.loadErr, m.Result, m.Triages, &m.ScanSources)
+	vm, err := buildPageViewModel(m.lastURL, m.scanID, m.loadErr, m.Result, m.AllResults, m.Triages, &m.ScanSources)
 	if err != nil {
 		m.logger.Errorf("Failed to prepare page: %s", err)
 		http.Error(w, "failed to prepare page: "+err.Error(), http.StatusInternalServerError)
@@ -80,11 +82,13 @@ func (m *WebServer) handleLoad(w http.ResponseWriter, r *http.Request) {
 }
 
 type HighlightViewModel struct {
-	FlowID string
-	Line   uint64
-	Column uint64
-	Length uint64
-	Name   string
+	FlowID       string
+	Line         uint64
+	Column       uint64
+	Length       uint64
+	Name         string
+	MatchCount   int
+	MatchIDsAttr string
 }
 
 type CodeBoxViewModel struct {
@@ -107,13 +111,14 @@ type FileGroupViewModel struct {
 }
 
 type PageViewModel struct {
-	URL          string
-	HasError     bool
-	ErrorMessage string
-	HasResults   bool
-	Finding      Cx1ClientGo.ScanSASTResult
-	Triages      []Cx1ClientGo.SASTResultsPredicates
-	FileGroups   []FileGroupViewModel
+	URL             string
+	HasError        bool
+	ErrorMessage    string
+	HasResults      bool
+	Finding         Cx1ClientGo.ScanSASTResult
+	AllResultsCount int
+	Triages         []Cx1ClientGo.SASTResultsPredicates
+	FileGroups      []FileGroupViewModel
 }
 
 type highlightPayload struct {
@@ -135,19 +140,27 @@ type codeBoxPayload struct {
 	Highlights  []highlightPayload `json:"highlights"`
 }
 
-func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
+func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanSASTResult, allResults []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
 	vm := PageViewModel{
-		URL:     url,
-		Finding: result,
-		Triages: triages,
+		URL:             url,
+		Finding:         result,
+		AllResultsCount: len(allResults),
+		Triages:         triages,
 	}
 	if loadErr != nil {
 		vm.HasError = true
 		vm.ErrorMessage = loadErr.Error()
 	}
 
+	str, _ := json.MarshalIndent(allResults, "", "  ")
+	fmt.Println("All Results: \n\n" + string(str))
+
+	nodeResultIndex := buildNodeResultIndex(allResults)
+
+	str, _ = json.MarshalIndent(nodeResultIndex, "", "  ")
+	fmt.Println("Node Result Index: \n\n" + string(str))
+
 	var boxes []CodeBoxViewModel
-	//for ri, result := range results {
 	for gi, group := range groupResultNodes(0, result) {
 		boxID := fmt.Sprintf("box-%d-%d", 0, gi)
 		minLine, maxLine := group.paddedRange()
@@ -156,12 +169,15 @@ func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanS
 		highlightPayloads := make([]highlightPayload, 0, len(group.Nodes))
 		for _, ref := range group.Nodes {
 			flowID := fmt.Sprintf("f%d-%d", 0, ref.NodeIndex)
+			matchIDs := nodeResultIndex[nodeMatchKey(ref.Node)]
 			highlights = append(highlights, HighlightViewModel{
-				FlowID: flowID,
-				Line:   ref.Node.Line,
-				Column: ref.Node.Column,
-				Length: ref.Node.Length,
-				Name:   ref.Node.Name,
+				FlowID:       flowID,
+				Line:         ref.Node.Line,
+				Column:       ref.Node.Column,
+				Length:       ref.Node.Length,
+				Name:         ref.Node.Name,
+				MatchCount:   len(matchIDs),
+				MatchIDsAttr: strings.Join(matchIDs, nodeMatchIDSep),
 			})
 			highlightPayloads = append(highlightPayloads, highlightPayload{
 				FlowID:    flowID,
@@ -197,7 +213,6 @@ func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanS
 			DataJSON:    template.JS(raw),
 		})
 	}
-	//}
 
 	for _, box := range boxes {
 		if n := len(vm.FileGroups); n > 0 && vm.FileGroups[n-1].FilePath == box.FilePath {

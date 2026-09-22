@@ -224,7 +224,74 @@ function wireResizeHandles(box) {
   });
 }
 
+function wireNodeMatchBadges() {
+  let popup = null;
+  let activeBadge = null;
+
+  function closePopup() {
+    if (popup) {
+      popup.remove();
+      popup = null;
+      activeBadge = null;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const badge = e.target.closest('[data-role="node-match"]');
+    if (!badge) {
+      if (popup && !e.target.closest(".node-match-popup")) closePopup();
+      return;
+    }
+
+    e.stopPropagation();
+    if (badge === activeBadge) {
+      closePopup();
+      return;
+    }
+    closePopup();
+
+    const ids = (badge.dataset.matchIds || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .sort();
+
+    popup = document.createElement("div");
+    popup.className = "node-match-popup";
+    popup.innerHTML =
+      '<div class="node-match-popup-header">' +
+      `<span>${ids.length} result${ids.length === 1 ? "" : "s"} through this node</span>` +
+      '<button type="button" class="node-match-popup-close" aria-label="Close">×</button>' +
+      "</div>" +
+      '<textarea class="node-match-popup-list" readonly wrap="off"></textarea>';
+    popup.querySelector(".node-match-popup-list").value = ids.join("\n");
+    popup.querySelector(".node-match-popup-close").addEventListener("click", closePopup);
+
+    document.body.appendChild(popup);
+
+    const rect = badge.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    let top = rect.bottom + 4;
+    let left = rect.left;
+    if (left + popupRect.width > window.innerWidth - 8) {
+      left = window.innerWidth - popupRect.width - 8;
+    }
+    if (top + popupRect.height > window.innerHeight - 8) {
+      top = rect.top - popupRect.height - 4;
+    }
+    popup.style.top = `${Math.max(top, 8)}px`;
+    popup.style.left = `${Math.max(left, 8)}px`;
+
+    activeBadge = badge;
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePopup();
+  });
+}
+
 const boxes = Array.from(document.querySelectorAll('[data-role="codebox"]')).map(mountBox);
 boxes.forEach(wireButtons);
 boxes.forEach(wireResizeHandles);
 initFlowArrows(boxes);
+wireNodeMatchBadges();

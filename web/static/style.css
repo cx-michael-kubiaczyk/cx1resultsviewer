@@ -10,6 +10,17 @@ body { font-family: sans-serif; margin: 1.5rem; }
   border-radius: 4px;
 }
 
+.query-result-count {
+  display: inline-block;
+  background: #dbe9ff;
+  color: #1a4d8f;
+  border-radius: 3px;
+  padding: 0.05em 0.45em;
+  margin-left: 0.35em;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
 .codebox-group {
   display: flex;
   flex-direction: row;
@@ -106,6 +117,66 @@ body { font-family: sans-serif; margin: 1.5rem; }
 .codebox-steps li { white-space: nowrap; margin-bottom: 0.4rem; }
 .codebox-step-name { display: block; }
 .codebox-step-loc { display: block; white-space: nowrap; color: #777; }
+.codebox-step-matchcount {
+  display: inline-block;
+  margin-left: 0.3em;
+  background: #e6f4ea;
+  color: #1e7a34;
+  border: 1px solid #b7ddc2;
+  border-radius: 3px;
+  padding: 0 0.35em;
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+}
+.codebox-step-matchcount:hover { background: #d3ecdb; }
+
+.node-match-popup {
+  position: fixed;
+  z-index: 10;
+  width: 260px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #888;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  font-family: sans-serif;
+}
+.node-match-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #333;
+}
+.node-match-popup-close {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #555;
+  padding: 0 0.2rem;
+}
+.node-match-popup-close:hover { color: #000; }
+.node-match-popup-list {
+  flex: 1;
+  min-height: 120px;
+  margin: 0.5rem;
+  padding: 0.4rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  resize: none;
+  overflow: auto;
+}
 
 .codebox-body {
   flex: 1;

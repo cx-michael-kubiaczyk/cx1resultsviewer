@@ -1,6 +1,11 @@
 package backend
 
-import "github.com/cxpsemea/Cx1ClientGo"
+import (
+	"fmt"
+	"sort"
+
+	"github.com/cxpsemea/Cx1ClientGo"
+)
 
 // mergeLineGap is the max line-number gap between a node and a group's
 // current [MinLine, MaxLine] window for that node to be merged into the
@@ -64,6 +69,41 @@ func groupResultNodes(resultIndex int, result Cx1ClientGo.ScanSASTResult) []node
 	}
 
 	return groups
+}
+
+// nodeMatchKey identifies a dataflow node by file+line+column+name, so that
+// the same source position reached by different results can be recognized
+// as "the same node" regardless of which result it came from.
+func nodeMatchKey(node Cx1ClientGo.ScanSASTResultNodes) string {
+	return fmt.Sprintf("%s\x00%d\x00%d\x00%s", node.FileName, node.Line, node.Column, node.Name)
+}
+
+// buildNodeResultIndex maps each node key to the sorted, de-duplicated list
+// of ResultIDs (from allResults) whose dataflow passes through that node.
+func buildNodeResultIndex(allResults []Cx1ClientGo.ScanSASTResult) map[string][]string {
+	sets := make(map[string]map[string]struct{})
+	for _, result := range allResults {
+		for _, node := range result.Data.Nodes {
+			key := nodeMatchKey(node)
+			set, ok := sets[key]
+			if !ok {
+				set = make(map[string]struct{})
+				sets[key] = set
+			}
+			set[result.ResultID] = struct{}{}
+		}
+	}
+
+	index := make(map[string][]string, len(sets))
+	for key, set := range sets {
+		ids := make([]string, 0, len(set))
+		for id := range set {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		index[key] = ids
+	}
+	return index
 }
 
 // paddedRange returns the group's line range widened by contextPaddingLines,

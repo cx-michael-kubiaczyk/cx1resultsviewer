@@ -30,7 +30,7 @@ func extractIDFromURL(path string) (ProjectID, ScanID, ResultID string, err erro
 
 func (m *WebServer) getAllFindings(scanId string, queryId uint64) ([]Cx1ClientGo.ScanSASTResult, error) {
 	filter := Cx1ClientGo.ScanSASTResultsFilter{
-		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 1},
+		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 100},
 		ScanID:     scanId,
 		QueryIDs:   []uint64{queryId},
 	}

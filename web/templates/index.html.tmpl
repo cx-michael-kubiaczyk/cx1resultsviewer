@@ -30,7 +30,7 @@
     <table>
     <tr><th>Query</th><th>SimID</th><th>Source File</th><th>Source Object</th><th>Dest File</th><th>Dest Object</th></tr>
         <tr>
-            <td>{{.Finding.Data.QueryName}}</td>
+            <td>{{.Finding.Data.QueryName}} <span class="query-result-count" title="Findings for this query in this scan">{{.AllResultsCount}}</span></td>
             <td>{{.Finding.SimilarityID}}</td>
             <td title="{{.Finding.FirstNode.FileName | trimLeadingSlash}}" style='max-width:200px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; direction: rtl;'>{{.Finding.FirstNode.FileName | trimLeadingSlash}}:{{.Finding.FirstNode.Line}}</td>
             <td>{{.Finding.FirstNode.Name}}</td>
@@ -73,7 +73,9 @@
                       {{range .Highlights}}
                         <li>
                           <span class="codebox-step-name">{{.Name}}</span>
-                          <span class="codebox-step-loc">({{.Line}}:{{.Column}})</span>
+                          <span class="codebox-step-loc">({{.Line}}:{{.Column}})
+                            <span class="codebox-step-matchcount" data-role="node-match" data-match-ids="{{.MatchIDsAttr}}" title="Results whose dataflow passes through this node">×{{.MatchCount}}</span>
+                          </span>
                         </li>
                       {{end}}
                     </ol>
