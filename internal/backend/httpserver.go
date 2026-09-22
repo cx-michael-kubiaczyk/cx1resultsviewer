@@ -152,13 +152,7 @@ func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanS
 		vm.ErrorMessage = loadErr.Error()
 	}
 
-	str, _ := json.MarshalIndent(allResults, "", "  ")
-	fmt.Println("All Results: \n\n" + string(str))
-
 	nodeResultIndex := buildNodeResultIndex(allResults)
-
-	str, _ = json.MarshalIndent(nodeResultIndex, "", "  ")
-	fmt.Println("Node Result Index: \n\n" + string(str))
 
 	var boxes []CodeBoxViewModel
 	for gi, group := range groupResultNodes(0, result) {
