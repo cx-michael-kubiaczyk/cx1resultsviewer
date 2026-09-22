@@ -224,7 +224,110 @@ function wireResizeHandles(box) {
   });
 }
 
+function parseIDList(raw) {
+  return (raw || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .sort();
+}
+
+function wireNodeMatchBadges() {
+  let popup = null;
+  let activeBadge = null;
+
+  function closePopup() {
+    if (popup) {
+      popup.remove();
+      popup = null;
+      activeBadge = null;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const badge = e.target.closest('[data-role="node-match"]');
+    if (!badge) {
+      if (popup && !e.target.closest(".node-match-popup")) closePopup();
+      return;
+    }
+
+    e.stopPropagation();
+    if (badge === activeBadge) {
+      closePopup();
+      return;
+    }
+    closePopup();
+
+    const idsByView = {
+      result: parseIDList(badge.dataset.matchIds),
+      similarity: parseIDList(badge.dataset.matchSimIds),
+    };
+    let view = "result";
+
+    popup = document.createElement("div");
+    popup.className = "node-match-popup";
+    popup.innerHTML =
+      '<div class="node-match-popup-header">' +
+      '<span class="node-match-popup-title"></span>' +
+      '<button type="button" class="node-match-popup-close" aria-label="Close">×</button>' +
+      "</div>" +
+      '<div class="node-match-popup-toggle" role="tablist">' +
+      '<button type="button" data-view="result" aria-pressed="true">Result ID</button>' +
+      '<button type="button" data-view="similarity" aria-pressed="false">Similarity ID</button>' +
+      "</div>" +
+      '<textarea class="node-match-popup-list" readonly wrap="off"></textarea>';
+
+    const titleEl = popup.querySelector(".node-match-popup-title");
+    const listEl = popup.querySelector(".node-match-popup-list");
+    const toggleBtns = popup.querySelectorAll(".node-match-popup-toggle button");
+
+    function renderView() {
+      const ids = idsByView[view];
+      const label = view === "result" ? "result" : "similarity ID";
+      titleEl.textContent = `${ids.length} ${label}${ids.length === 1 ? "" : "s"} through this node`;
+      listEl.value = ids.join("\n");
+      toggleBtns.forEach((btn) => {
+        const isActive = btn.dataset.view === view;
+        btn.classList.toggle("is-active", isActive);
+        btn.setAttribute("aria-pressed", String(isActive));
+      });
+    }
+
+    toggleBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        view = btn.dataset.view;
+        renderView();
+      });
+    });
+
+    renderView();
+    popup.querySelector(".node-match-popup-close").addEventListener("click", closePopup);
+
+    document.body.appendChild(popup);
+
+    const rect = badge.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    let top = rect.bottom + 4;
+    let left = rect.left;
+    if (left + popupRect.width > window.innerWidth - 8) {
+      left = window.innerWidth - popupRect.width - 8;
+    }
+    if (top + popupRect.height > window.innerHeight - 8) {
+      top = rect.top - popupRect.height - 4;
+    }
+    popup.style.top = `${Math.max(top, 8)}px`;
+    popup.style.left = `${Math.max(left, 8)}px`;
+
+    activeBadge = badge;
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePopup();
+  });
+}
+
 const boxes = Array.from(document.querySelectorAll('[data-role="codebox"]')).map(mountBox);
 boxes.forEach(wireButtons);
 boxes.forEach(wireResizeHandles);
 initFlowArrows(boxes);
+wireNodeMatchBadges();

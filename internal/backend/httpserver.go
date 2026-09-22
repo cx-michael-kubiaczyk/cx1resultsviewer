@@ -11,6 +11,8 @@ import (
 	"github.com/cxpsemea/Cx1ClientGo"
 )
 
+const nodeMatchIDSep = ","
+
 var templateFuncs = template.FuncMap{
 	"trimLeadingSlash": func(s string) string {
 		return strings.TrimPrefix(s, "/")
@@ -36,7 +38,7 @@ func (m *WebServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	defer m.mu.RUnlock()
 
 	m.logger.Infof("Handling url: %s", m.lastURL)
-	vm, err := buildPageViewModel(m.lastURL, m.scanID, m.loadErr, m.Results, m.Triages, &m.ScanSources)
+	vm, err := buildPageViewModel(m.lastURL, m.scanID, m.loadErr, m.Result, m.AllResults, m.Triages, &m.ScanSources)
 	if err != nil {
 		m.logger.Errorf("Failed to prepare page: %s", err)
 		http.Error(w, "failed to prepare page: "+err.Error(), http.StatusInternalServerError)
@@ -80,11 +82,14 @@ func (m *WebServer) handleLoad(w http.ResponseWriter, r *http.Request) {
 }
 
 type HighlightViewModel struct {
-	FlowID string
-	Line   uint64
-	Column uint64
-	Length uint64
-	Name   string
+	FlowID          string
+	Line            uint64
+	Column          uint64
+	Length          uint64
+	Name            string
+	MatchCount      int
+	MatchIDsAttr    string
+	MatchSimIDsAttr string
 }
 
 type CodeBoxViewModel struct {
@@ -107,13 +112,14 @@ type FileGroupViewModel struct {
 }
 
 type PageViewModel struct {
-	URL          string
-	HasError     bool
-	ErrorMessage string
-	HasResults   bool
-	Findings     []Cx1ClientGo.ScanSASTResult
-	Triages      []Cx1ClientGo.SASTResultsPredicates
-	FileGroups   []FileGroupViewModel
+	URL             string
+	HasError        bool
+	ErrorMessage    string
+	HasResults      bool
+	Finding         Cx1ClientGo.ScanSASTResult
+	AllResultsCount int
+	Triages         []Cx1ClientGo.SASTResultsPredicates
+	FileGroups      []FileGroupViewModel
 }
 
 type highlightPayload struct {
@@ -135,68 +141,73 @@ type codeBoxPayload struct {
 	Highlights  []highlightPayload `json:"highlights"`
 }
 
-func buildPageViewModel(url, sid string, loadErr error, results []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
+func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanSASTResult, allResults []Cx1ClientGo.ScanSASTResult, triages []Cx1ClientGo.SASTResultsPredicates, sources *CodeSet) (PageViewModel, error) {
 	vm := PageViewModel{
-		URL:      url,
-		Findings: results,
-		Triages:  triages,
+		URL:             url,
+		Finding:         result,
+		AllResultsCount: len(allResults),
+		Triages:         triages,
 	}
 	if loadErr != nil {
 		vm.HasError = true
 		vm.ErrorMessage = loadErr.Error()
 	}
 
+	nodeResultIndex := buildNodeResultIndex(allResults)
+
 	var boxes []CodeBoxViewModel
-	for ri, result := range results {
-		for gi, group := range groupResultNodes(ri, result) {
-			boxID := fmt.Sprintf("box-%d-%d", ri, gi)
-			minLine, maxLine := group.paddedRange()
+	for gi, group := range groupResultNodes(0, result) {
+		boxID := fmt.Sprintf("box-%d-%d", 0, gi)
+		minLine, maxLine := group.paddedRange()
 
-			highlights := make([]HighlightViewModel, 0, len(group.Nodes))
-			highlightPayloads := make([]highlightPayload, 0, len(group.Nodes))
-			for _, ref := range group.Nodes {
-				flowID := fmt.Sprintf("f%d-%d", ri, ref.NodeIndex)
-				highlights = append(highlights, HighlightViewModel{
-					FlowID: flowID,
-					Line:   ref.Node.Line,
-					Column: ref.Node.Column,
-					Length: ref.Node.Length,
-					Name:   ref.Node.Name,
-				})
-				highlightPayloads = append(highlightPayloads, highlightPayload{
-					FlowID:    flowID,
-					NodeIndex: ref.NodeIndex,
-					Line:      ref.Node.Line,
-					Column:    ref.Node.Column,
-					Length:    ref.Node.Length,
-					Name:      ref.Node.Name,
-				})
-			}
-
-			payload := codeBoxPayload{
-				BoxID:       boxID,
-				FilePath:    group.FilePath,
-				Source:      sources.GetFile(sid, group.FilePath),
-				ResultIndex: ri,
-				MinLine:     minLine,
-				MaxLine:     maxLine,
-				Highlights:  highlightPayloads,
-			}
-			raw, err := json.Marshal(payload)
-			if err != nil {
-				return vm, err
-			}
-			boxes = append(boxes, CodeBoxViewModel{
-				BoxID:       boxID,
-				ResultIndex: ri,
-				FilePath:    group.FilePath,
-				QueryName:   result.Data.QueryName,
-				MinLine:     minLine,
-				MaxLine:     maxLine,
-				Highlights:  highlights,
-				DataJSON:    template.JS(raw),
+		highlights := make([]HighlightViewModel, 0, len(group.Nodes))
+		highlightPayloads := make([]highlightPayload, 0, len(group.Nodes))
+		for _, ref := range group.Nodes {
+			flowID := fmt.Sprintf("f%d-%d", 0, ref.NodeIndex)
+			match := nodeResultIndex[nodeMatchKey(ref.Node)]
+			highlights = append(highlights, HighlightViewModel{
+				FlowID:          flowID,
+				Line:            ref.Node.Line,
+				Column:          ref.Node.Column,
+				Length:          ref.Node.Length,
+				Name:            ref.Node.Name,
+				MatchCount:      len(match.ResultIDs),
+				MatchIDsAttr:    strings.Join(match.ResultIDs, nodeMatchIDSep),
+				MatchSimIDsAttr: strings.Join(match.SimilarityIDs, nodeMatchIDSep),
+			})
+			highlightPayloads = append(highlightPayloads, highlightPayload{
+				FlowID:    flowID,
+				NodeIndex: ref.NodeIndex,
+				Line:      ref.Node.Line,
+				Column:    ref.Node.Column,
+				Length:    ref.Node.Length,
+				Name:      ref.Node.Name,
 			})
 		}
+
+		payload := codeBoxPayload{
+			BoxID:       boxID,
+			FilePath:    group.FilePath,
+			Source:      sources.GetFile(sid, group.FilePath),
+			ResultIndex: 0,
+			MinLine:     minLine,
+			MaxLine:     maxLine,
+			Highlights:  highlightPayloads,
+		}
+		raw, err := json.Marshal(payload)
+		if err != nil {
+			return vm, err
+		}
+		boxes = append(boxes, CodeBoxViewModel{
+			BoxID:       boxID,
+			ResultIndex: 0,
+			FilePath:    group.FilePath,
+			QueryName:   result.Data.QueryName,
+			MinLine:     minLine,
+			MaxLine:     maxLine,
+			Highlights:  highlights,
+			DataJSON:    template.JS(raw),
+		})
 	}
 
 	for _, box := range boxes {
