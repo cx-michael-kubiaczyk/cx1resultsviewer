@@ -28,9 +28,24 @@ func extractIDFromURL(path string) (ProjectID, ScanID, ResultID string, err erro
 	return
 }
 
+func (m *WebServer) getAllFindings(scanId string, queryId uint64) ([]Cx1ClientGo.ScanSASTResult, error) {
+	filter := Cx1ClientGo.ScanSASTResultsFilter{
+		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 1},
+		ScanID:     scanId,
+		QueryIDs:   []uint64{queryId},
+	}
+
+	_, results, err := m.Cx1Client.GetAllScanSASTResultsFiltered(filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get results: %v", err)
+	}
+
+	return results, nil
+}
+
 func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTResult, error) {
 	filter := Cx1ClientGo.ScanSASTResultsFilter{
-		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 10},
+		BaseFilter: Cx1ClientGo.BaseFilter{Limit: 1},
 		ScanID:     sid,
 		ResultIDs:  []string{rid},
 	}
@@ -56,5 +71,4 @@ func (m *WebServer) createCodeExtract(sid, rid string) ([]Cx1ClientGo.ScanSASTRe
 		}
 	}
 	return results, nil
-
 }
