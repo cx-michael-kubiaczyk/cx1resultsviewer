@@ -78,32 +78,52 @@ func nodeMatchKey(node Cx1ClientGo.ScanSASTResultNodes) string {
 	return fmt.Sprintf("%s\x00%d\x00%d\x00%s", node.FileName, node.Line, node.Column, node.Name)
 }
 
-// buildNodeResultIndex maps each node key to the sorted, de-duplicated list
-// of ResultIDs (from allResults) whose dataflow passes through that node.
-func buildNodeResultIndex(allResults []Cx1ClientGo.ScanSASTResult) map[string][]string {
-	sets := make(map[string]map[string]struct{})
+// nodeMatchIDs holds the two identifier lists a matching popup can show for
+// a node, each independently de-duplicated and sorted.
+type nodeMatchIDs struct {
+	ResultIDs     []string
+	SimilarityIDs []string
+}
+
+// buildNodeResultIndex maps each node key to the sorted, de-duplicated lists
+// of ResultIDs and SimilarityIDs (from allResults) whose dataflow passes
+// through that node.
+func buildNodeResultIndex(allResults []Cx1ClientGo.ScanSASTResult) map[string]nodeMatchIDs {
+	resultSets := make(map[string]map[string]struct{})
+	simSets := make(map[string]map[string]struct{})
 	for _, result := range allResults {
 		for _, node := range result.Data.Nodes {
 			key := nodeMatchKey(node)
-			set, ok := sets[key]
-			if !ok {
-				set = make(map[string]struct{})
-				sets[key] = set
+
+			if resultSets[key] == nil {
+				resultSets[key] = make(map[string]struct{})
 			}
-			set[result.ResultID] = struct{}{}
+			resultSets[key][result.ResultID] = struct{}{}
+
+			if simSets[key] == nil {
+				simSets[key] = make(map[string]struct{})
+			}
+			simSets[key][result.SimilarityID] = struct{}{}
 		}
 	}
 
-	index := make(map[string][]string, len(sets))
-	for key, set := range sets {
-		ids := make([]string, 0, len(set))
-		for id := range set {
-			ids = append(ids, id)
+	index := make(map[string]nodeMatchIDs, len(resultSets))
+	for key, set := range resultSets {
+		index[key] = nodeMatchIDs{
+			ResultIDs:     sortedKeys(set),
+			SimilarityIDs: sortedKeys(simSets[key]),
 		}
-		sort.Strings(ids)
-		index[key] = ids
 	}
 	return index
+}
+
+func sortedKeys(set map[string]struct{}) []string {
+	ids := make([]string, 0, len(set))
+	for id := range set {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 // paddedRange returns the group's line range widened by contextPaddingLines,

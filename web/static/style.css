@@ -134,8 +134,8 @@ body { font-family: sans-serif; margin: 1.5rem; }
 .node-match-popup {
   position: fixed;
   z-index: 10;
-  width: 260px;
-  max-height: 320px;
+  width: 280px;
+  max-height: 360px;
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -155,6 +155,7 @@ body { font-family: sans-serif; margin: 1.5rem; }
   font-weight: bold;
   color: #333;
 }
+.node-match-popup-title { min-width: 0; }
 .node-match-popup-close {
   border: none;
   background: none;
@@ -163,8 +164,31 @@ body { font-family: sans-serif; margin: 1.5rem; }
   cursor: pointer;
   color: #555;
   padding: 0 0.2rem;
+  flex-shrink: 0;
 }
 .node-match-popup-close:hover { color: #000; }
+.node-match-popup-toggle {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem 0;
+}
+.node-match-popup-toggle button {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #f4f4f4;
+  color: #555;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.3rem;
+  cursor: pointer;
+}
+.node-match-popup-toggle button:hover { background: #ebebeb; }
+.node-match-popup-toggle button.is-active {
+  background: #1a4d8f;
+  border-color: #1a4d8f;
+  color: #fff;
+  font-weight: bold;
+}
 .node-match-popup-list {
   flex: 1;
   min-height: 120px;

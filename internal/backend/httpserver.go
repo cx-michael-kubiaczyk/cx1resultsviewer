@@ -82,13 +82,14 @@ func (m *WebServer) handleLoad(w http.ResponseWriter, r *http.Request) {
 }
 
 type HighlightViewModel struct {
-	FlowID       string
-	Line         uint64
-	Column       uint64
-	Length       uint64
-	Name         string
-	MatchCount   int
-	MatchIDsAttr string
+	FlowID          string
+	Line            uint64
+	Column          uint64
+	Length          uint64
+	Name            string
+	MatchCount      int
+	MatchIDsAttr    string
+	MatchSimIDsAttr string
 }
 
 type CodeBoxViewModel struct {
@@ -163,15 +164,16 @@ func buildPageViewModel(url, sid string, loadErr error, result Cx1ClientGo.ScanS
 		highlightPayloads := make([]highlightPayload, 0, len(group.Nodes))
 		for _, ref := range group.Nodes {
 			flowID := fmt.Sprintf("f%d-%d", 0, ref.NodeIndex)
-			matchIDs := nodeResultIndex[nodeMatchKey(ref.Node)]
+			match := nodeResultIndex[nodeMatchKey(ref.Node)]
 			highlights = append(highlights, HighlightViewModel{
-				FlowID:       flowID,
-				Line:         ref.Node.Line,
-				Column:       ref.Node.Column,
-				Length:       ref.Node.Length,
-				Name:         ref.Node.Name,
-				MatchCount:   len(matchIDs),
-				MatchIDsAttr: strings.Join(matchIDs, nodeMatchIDSep),
+				FlowID:          flowID,
+				Line:            ref.Node.Line,
+				Column:          ref.Node.Column,
+				Length:          ref.Node.Length,
+				Name:            ref.Node.Name,
+				MatchCount:      len(match.ResultIDs),
+				MatchIDsAttr:    strings.Join(match.ResultIDs, nodeMatchIDSep),
+				MatchSimIDsAttr: strings.Join(match.SimilarityIDs, nodeMatchIDSep),
 			})
 			highlightPayloads = append(highlightPayloads, highlightPayload{
 				FlowID:    flowID,

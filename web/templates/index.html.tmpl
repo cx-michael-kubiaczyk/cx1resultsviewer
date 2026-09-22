@@ -74,7 +74,7 @@
                         <li>
                           <span class="codebox-step-name">{{.Name}}</span>
                           <span class="codebox-step-loc">({{.Line}}:{{.Column}})
-                            <span class="codebox-step-matchcount" data-role="node-match" data-match-ids="{{.MatchIDsAttr}}" title="Results whose dataflow passes through this node">×{{.MatchCount}}</span>
+                            <span class="codebox-step-matchcount" data-role="node-match" data-match-ids="{{.MatchIDsAttr}}" data-match-sim-ids="{{.MatchSimIDsAttr}}" title="Results whose dataflow passes through this node">×{{.MatchCount}}</span>
                           </span>
                         </li>
                       {{end}}
