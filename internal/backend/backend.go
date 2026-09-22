@@ -13,7 +13,8 @@ type WebServer struct {
 	Cx1Client   *Cx1ClientGo.Cx1Client
 	logger      *logrus.Logger
 	ScanSources CodeSet
-	Results     []Cx1ClientGo.ScanSASTResult
+	Result      Cx1ClientGo.ScanSASTResult
+	AllResults  []Cx1ClientGo.ScanSASTResult
 	Triages     []Cx1ClientGo.SASTResultsPredicates
 
 	Addr   string
@@ -45,15 +46,21 @@ func (m *WebServer) LoadResults(path string) error {
 	m.projectID = pid
 	m.scanID = sid
 
-	m.Results, err = m.createCodeExtract(sid, rid)
+	results, err := m.createCodeExtract(sid, rid)
 	if err != nil {
 		return fmt.Errorf("failed to create code extract: %v", err)
 	}
 
-	if len(m.Results) == 1 {
-		m.Triages, err = m.Cx1Client.GetSASTResultsPredicatesByID(m.Results[0].SimilarityID, pid, sid)
+	if len(results) >= 1 {
+		m.Result = results[0]
+		m.Triages, err = m.Cx1Client.GetSASTResultsPredicatesByID(m.Result.SimilarityID, pid, sid)
 		if err != nil {
-			return fmt.Errorf("failed to get predicates for similarity ID %s: %v", m.Results[0].SimilarityID, err)
+			return fmt.Errorf("failed to get predicates for similarity ID %s: %v", m.Result.SimilarityID, err)
+		}
+
+		m.AllResults, err = m.getAllFindings(sid, m.Result.Data.QueryID)
+		if err != nil {
+			return fmt.Errorf("failed to get all findings with same queryId %d", m.Result.Data.QueryID)
 		}
 	}
 
@@ -74,12 +81,11 @@ func (m *WebServer) test() error {
 		return err
 	}
 
-	for _, result := range m.Results {
-		fmt.Printf("Result: %s\n", result.ResultID)
-		for i, node := range result.Data.Nodes {
-			fmt.Printf("Node %d: %s line %d col %d length %d - '%s'\n", i+1, node.FileName, node.Line, node.Column, node.Length, node.Name)
-			fmt.Println(m.ScanSources.GetFile("0f562295-d7a8-49d6-bd37-82177647633b", node.FileName))
-		}
+	fmt.Printf("Result: %s\n", m.Result.ResultID)
+	for i, node := range m.Result.Data.Nodes {
+		fmt.Printf("Node %d: %s line %d col %d length %d - '%s'\n", i+1, node.FileName, node.Line, node.Column, node.Length, node.Name)
+		fmt.Println(m.ScanSources.GetFile("0f562295-d7a8-49d6-bd37-82177647633b", node.FileName))
 	}
+
 	return nil
 }
